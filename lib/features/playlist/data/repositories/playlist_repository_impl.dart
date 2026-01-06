@@ -22,14 +22,20 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<Either<Failure, List<Channel>>> getChannels(String url) async {
     try {
+      print('[PlaylistRepository] Descargando desde: $url');
       final response = await dio.get(url);
+      print('[PlaylistRepository] Respuesta recibida: ${response.statusCode}');
       final content = response.data.toString();
+      print('[PlaylistRepository] Tamaño del contenido: ${content.length} bytes');
 
       // Use compute to run parsing in a separate isolate.
       // Parser returns List<Channel> entities
+      print('[PlaylistRepository] Iniciando parsing en Isolate...');
       final channels = await compute(parser.parse, content);
+      print('[PlaylistRepository] Parsing completado: ${channels.length} canales');
 
       // Convert Channel entities to ChannelModel for caching
+      print('[PlaylistRepository] Convirtiendo a modelos para caché...');
       final channelModels = channels
           .map((channel) => ChannelModel(
                 id: channel.id,
@@ -41,12 +47,15 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
           .toList();
 
       // Cache the channel models
+      print('[PlaylistRepository] Guardando en caché local...');
       await localDataSource.cacheChannels(channelModels);
+      print('[PlaylistRepository] Caché guardado exitosamente');
 
       // Return the Channel entities
       return Right(channels);
     } catch (e) {
       // Handle exceptions, e.g., network errors, parsing errors
+      print('[PlaylistRepository] Error cargando canales: $e');
       return Left(ServerFailure('Failed to load or parse playlist: $e'));
     }
   }

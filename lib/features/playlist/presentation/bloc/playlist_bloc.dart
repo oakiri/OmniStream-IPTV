@@ -12,15 +12,27 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
 
   PlaylistBloc({required this.getPlaylist}) : super(PlaylistInitial()) {
     on<LoadPlaylist>((event, emit) async {
+      print('🎬 Iniciando carga de canales...');
+      print('📍 URL de la lista: ${event.url}');
       emit(PlaylistLoading());
-      final failureOrChannels = await getPlaylist(event.url);
-      failureOrChannels.fold(
-        (failure) => emit(PlaylistError(failure.toString())),
-        (channels) {
-          final categories = _groupChannelsIntoCategories(channels);
-          emit(PlaylistLoaded(channels: channels, categories: categories));
-        },
-      );
+      try {
+        final failureOrChannels = await getPlaylist(event.url);
+        failureOrChannels.fold(
+          (failure) {
+            print('❌ Error cargando canales: $failure');
+            emit(PlaylistError(failure.toString()));
+          },
+          (channels) {
+            print('✓ Carga completada. Total canales: ${channels.length}');
+            final categories = _groupChannelsIntoCategories(channels);
+            print('✓ Categorías agrupadas: ${categories.length}');
+            emit(PlaylistLoaded(channels: channels, categories: categories));
+          },
+        );
+      } catch (e) {
+        print('❌ Error inesperado cargando canales: $e');
+        emit(PlaylistError('Error inesperado: $e'));
+      }
     });
   }
 

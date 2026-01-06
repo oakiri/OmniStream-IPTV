@@ -9,6 +9,21 @@ class GetPlaylist {
   GetPlaylist(this.repository);
 
   Future<Either<Failure, List<Channel>>> call(String url) async {
-    return await repository.getChannels(url);
+    print('[GetPlaylist] Iniciando descarga desde: $url');
+    try {
+      final result = await repository.getChannels(url);
+      result.fold(
+        (failure) {
+          print('[GetPlaylist] Fallo en repositorio: $failure');
+        },
+        (channels) {
+          print('[GetPlaylist] Éxito: ${channels.length} canales obtenidos');
+        },
+      );
+      return result;
+    } catch (e) {
+      print('[GetPlaylist] Error inesperado: $e');
+      rethrow;
+    }
   }
 }
