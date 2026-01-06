@@ -60,7 +60,6 @@ dependencies:
   
   # Logging & Debugging
   logger: ^2.0.0
-  sentry_flutter: ^7.8.0
   
   # Performance & Optimization
   get_it: ^7.6.0
