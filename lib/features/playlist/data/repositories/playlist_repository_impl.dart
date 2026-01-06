@@ -26,22 +26,24 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       final content = response.data.toString();
 
       // Use compute to run parsing in a separate isolate.
-      final channelModels = await compute(parser.parse, content);
-      
-      // Cache the channel models
-      await localDataSource.cacheChannels(channelModels);
-      
-      // Convert ChannelModel to Channel entity
-      final channels = channelModels
-          .map((model) => Channel(
-                id: model.id,
-                name: model.name,
-                url: model.url,
-                group: model.group,
-                logoUrl: model.logoUrl,
+      // Parser returns List<Channel> entities
+      final channels = await compute(parser.parse, content);
+
+      // Convert Channel entities to ChannelModel for caching
+      final channelModels = channels
+          .map((channel) => ChannelModel(
+                id: channel.id,
+                name: channel.name,
+                url: channel.url,
+                group: channel.group,
+                logoUrl: channel.logoUrl,
               ))
           .toList();
 
+      // Cache the channel models
+      await localDataSource.cacheChannels(channelModels);
+
+      // Return the Channel entities
       return Right(channels);
     } catch (e) {
       // Handle exceptions, e.g., network errors, parsing errors
