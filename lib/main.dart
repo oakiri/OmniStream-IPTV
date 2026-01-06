@@ -9,6 +9,15 @@ import 'package:omnistream_iptv/core/router/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialize MediaKit FIRST - critical for video playback
+  try {
+    print('[MAIN] Initializing MediaKit...');
+    MediaKit.ensureInitialized();
+    print('✓ [MAIN] MediaKit initialized successfully');
+  } catch (e) {
+    print('❌ [MAIN] Error initializing MediaKit: $e');
+  }
+  
   // Load environment variables from .env file with maximum error handling
   try {
     print('[MAIN] Attempting to load .env file...');
@@ -37,15 +46,6 @@ void main() async {
     print('✓ [MAIN] Dependency injection initialized');
   } catch (e) {
     print('❌ [MAIN] Error initializing DI: $e');
-  }
-  
-  try {
-    // Initialize MediaKit for video playback
-    print('[MAIN] Initializing MediaKit...');
-    MediaKit.ensureInitialized();
-    print('✓ [MAIN] MediaKit initialized');
-  } catch (e) {
-    print('❌ [MAIN] Error initializing MediaKit: $e');
   }
   
   print('[MAIN] Starting app...');

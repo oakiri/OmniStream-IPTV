@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_local_data_source.dart';
@@ -37,7 +39,28 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => PlaylistParser());
 
-  // External
-  sl.registerLazySingleton(() => Dio());
+  // External - Dio with certificate bypass for IPTV providers
+  sl.registerLazySingleton<Dio>(() {
+    final dio = Dio();
+    
+    // Configure to accept insecure certificates (required for many IPTV providers)
+    try {
+      print('[DI] Configuring Dio with insecure certificate bypass...');
+      (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+        final client = HttpClient();
+        client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+          print('[DI] Certificate verification bypassed for: $host:$port');
+          return true; // Accept all certificates
+        };
+        return client;
+      };
+      print('✓ [DI] Dio configured successfully');
+    } catch (e) {
+      print('⚠ [DI] Warning: Could not configure certificate bypass: $e');
+    }
+    
+    return dio;
+  });
+  
   sl.registerLazySingleton<Box<ChannelModel>>(() => Hive.box<ChannelModel>('channels'));
 }
