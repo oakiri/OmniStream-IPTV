@@ -31,8 +31,8 @@ dependencies:
   video_player: ^2.7.0
   media_kit: ^1.2.0
   media_kit_video: ^1.2.0
-  media_kit_libs_linux: ^1.2.0
-  media_kit_libs_macos: ^1.2.0
+  # media_kit_libs_linux: ^1.2.0  # Disabled for Android build
+  # media_kit_libs_macos: ^1.2.0  # Disabled for Android build
   
   # Environment Variables
   flutter_dotenv: ^5.1.0
