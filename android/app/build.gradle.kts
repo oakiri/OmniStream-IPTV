@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.example.omnistream_iptv"
-    compileSdk = 34
+    compileSdk = 36
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -20,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.example.omnistream_iptv"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
         
