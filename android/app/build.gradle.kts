@@ -1,11 +1,11 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.android") version "1.9.22"
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.omnistream.app"
+    namespace = "com.example.omnistream_iptv"
     compileSdk = 34
 
     compileOptions {
@@ -18,7 +18,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.omnistream.app"
+        applicationId = "com.example.omnistream_iptv"
         minSdk = 21
         targetSdk = 34
         versionCode = 1
@@ -44,7 +44,6 @@ flutter {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
