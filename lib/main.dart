@@ -9,24 +9,46 @@ import 'package:omnistream_iptv/core/router/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables from .env file with error handling
+  // Load environment variables from .env file with maximum error handling
   try {
+    print('[MAIN] Attempting to load .env file...');
     await dotenv.load(fileName: '.env');
-    print('✓ .env file loaded successfully');
+    print('✓ [MAIN] .env file loaded successfully');
   } catch (e) {
-    print('⚠ Warning: Failed to load .env file: $e');
-    print('⚠ Continuing with default values...');
+    print('⚠ [MAIN] Warning: Failed to load .env file: $e');
+    print('⚠ [MAIN] Error type: ${e.runtimeType}');
+    print('⚠ [MAIN] Continuing with default values...');
+    // Continue anyway - don't crash the app
   }
   
-  // Initialize Hive for local storage
-  await HiveService().init();
+  try {
+    // Initialize Hive for local storage
+    print('[MAIN] Initializing Hive...');
+    await HiveService().init();
+    print('✓ [MAIN] Hive initialized');
+  } catch (e) {
+    print('❌ [MAIN] Error initializing Hive: $e');
+  }
   
-  // Initialize dependency injection
-  await di.init();
+  try {
+    // Initialize dependency injection
+    print('[MAIN] Initializing dependency injection...');
+    await di.init();
+    print('✓ [MAIN] Dependency injection initialized');
+  } catch (e) {
+    print('❌ [MAIN] Error initializing DI: $e');
+  }
   
-  // Initialize MediaKit for video playback
-  MediaKit.ensureInitialized();
+  try {
+    // Initialize MediaKit for video playback
+    print('[MAIN] Initializing MediaKit...');
+    MediaKit.ensureInitialized();
+    print('✓ [MAIN] MediaKit initialized');
+  } catch (e) {
+    print('❌ [MAIN] Error initializing MediaKit: $e');
+  }
   
+  print('[MAIN] Starting app...');
   runApp(
     const ProviderScope(
       child: OmniStreamApp(),
