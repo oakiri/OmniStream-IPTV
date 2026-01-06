@@ -9,8 +9,14 @@ import 'package:omnistream_iptv/core/router/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables from .env file
-  await dotenv.load(fileName: '.env');
+  // Load environment variables from .env file with error handling
+  try {
+    await dotenv.load(fileName: '.env');
+    print('✓ .env file loaded successfully');
+  } catch (e) {
+    print('⚠ Warning: Failed to load .env file: $e');
+    print('⚠ Continuing with default values...');
+  }
   
   // Initialize Hive for local storage
   await HiveService().init();
