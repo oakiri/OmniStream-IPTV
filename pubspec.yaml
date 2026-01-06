@@ -29,8 +29,9 @@ dependencies:
   
   # Video Player & Media
   video_player: ^2.7.0
-  media_kit: ^1.2.0
-  media_kit_video: ^1.2.0
+  media_kit: ^1.1.10
+  media_kit_video: ^1.2.4
+  media_kit_libs_android_video: ^1.0.6  # REQUIRED: Native libmpv.so for Android
   # media_kit_libs_linux: ^1.2.0  # Disabled for Android build
   # media_kit_libs_macos: ^1.2.0  # Disabled for Android build
   

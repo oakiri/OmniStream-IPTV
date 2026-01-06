@@ -12,6 +12,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   final Dio dio;
   final PlaylistParser parser;
   final PlaylistLocalDataSource localDataSource;
+  
+  // Limit to prevent app crash with massive playlists
+  static const int MAX_CHANNELS = 5000;
 
   PlaylistRepositoryImpl({
     required this.dio,
@@ -31,8 +34,15 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       // Use compute to run parsing in a separate isolate.
       // Parser returns List<Channel> entities
       print('[PlaylistRepository] Iniciando parsing en Isolate...');
-      final channels = await compute(parser.parse, content);
+      var channels = await compute(parser.parse, content);
       print('[PlaylistRepository] Parsing completado: ${channels.length} canales');
+
+      // OPTIMIZATION: Limit to MAX_CHANNELS to prevent app crash
+      if (channels.length > MAX_CHANNELS) {
+        print('[PlaylistRepository] ⚠ Playlist tiene ${channels.length} canales. Limitando a $MAX_CHANNELS');
+        channels = channels.sublist(0, MAX_CHANNELS);
+        print('[PlaylistRepository] ✓ Limitado a $MAX_CHANNELS canales');
+      }
 
       // Convert Channel entities to ChannelModel for caching
       print('[PlaylistRepository] Convirtiendo a modelos para caché...');
@@ -47,7 +57,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
           .toList();
 
       // Cache the channel models
-      print('[PlaylistRepository] Guardando en caché local...');
+      print('[PlaylistRepository] Guardando en caché local ${channelModels.length} canales...');
       await localDataSource.cacheChannels(channelModels);
       print('[PlaylistRepository] Caché guardado exitosamente');
 

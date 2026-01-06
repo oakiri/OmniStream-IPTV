@@ -24,22 +24,34 @@ class _PlayerPageState extends State<PlayerPage> {
   @override
   void initState() {
     super.initState();
-    _initializePlayer();
+    // Use Future.microtask to ensure widget is mounted before accessing context
+    Future.microtask(() {
+      _initializePlayer();
+    });
   }
 
   Future<void> _initializePlayer() async {
     try {
+      print('[PlayerPage] Initializing player for: ${widget.channel.name}');
+      print('[PlayerPage] Stream URL: ${widget.channel.url}');
       await player.open(
         Media(widget.channel.url),
         play: true,
       );
-      setState(() {
-        _isPlaying = true;
-      });
+      print('[PlayerPage] Player opened successfully');
+      if (mounted) {
+        setState(() {
+          _isPlaying = true;
+        });
+      }
     } catch (e) {
+      print('[PlayerPage] Error loading stream: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading stream: $e')),
+          SnackBar(
+            content: Text('Error loading stream: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -58,6 +70,7 @@ class _PlayerPageState extends State<PlayerPage> {
 
   @override
   void dispose() {
+    print('[PlayerPage] Disposing player...');
     player.dispose();
     super.dispose();
   }
