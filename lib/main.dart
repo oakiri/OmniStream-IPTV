@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:omnistream_iptv/core/database/hive_service.dart';
+import 'package:omnistream_iptv/injection_container.dart' as di;
 
 void main() async {
   // Load environment variables from .env file
   await dotenv.load(fileName: '.env');
   
-    await HiveService().init();
+      await HiveService().init();
+  await di.init();
 
   runApp(
     const ProviderScope(
