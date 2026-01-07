@@ -1,5 +1,5 @@
 part of 'playlist_bloc.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/category.dart' as entity;
+
 
 abstract class PlaylistState extends Equatable {
   const PlaylistState();
@@ -14,7 +14,7 @@ class PlaylistLoading extends PlaylistState {}
 
 class PlaylistLoaded extends PlaylistState {
   final List<Channel> channels;
-  final List<entity.Category> categories;
+  final List<playlist_category.Category> categories;
 
   const PlaylistLoaded({required this.channels, required this.categories});
 

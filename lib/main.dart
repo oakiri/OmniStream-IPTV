@@ -49,17 +49,28 @@ void main() async {
     print('[MAIN] Initializing dependency injection...');
     await di.init();
 
-    // Initialize Firebase
-    await Firebase.initializeApp();
+    try {
+      // Initialize Firebase
+      print('[MAIN] Initializing Firebase...');
+      await Firebase.initializeApp();
+      print('✓ [MAIN] Firebase initialized');
 
-    // Sign in anonymously
-    final signInAnonymously = di.sl<SignInAnonymously>();
-    await signInAnonymously(NoParams());
+      // Sign in anonymously
+      print('[MAIN] Signing in anonymously...');
+      final signInAnonymously = di.sl<SignInAnonymously>();
+      await signInAnonymously(NoParams());
+      print('✓ [MAIN] Signed in anonymously');
 
-    // Initialize Crashlytics and Performance Monitoring
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
-    await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+      // Initialize Crashlytics and Performance Monitoring
+      print('[MAIN] Initializing Crashlytics and Performance Monitoring...');
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+      await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+      print('✓ [MAIN] Crashlytics and Performance Monitoring initialized');
+    } catch (e) {
+      print('❌ [MAIN] Error initializing Firebase or related services: $e');
+      print('⚠ [MAIN] Firebase features will be disabled.');
+    }
 
     print('✓ [MAIN] Dependency injection initialized');
   } catch (e) {

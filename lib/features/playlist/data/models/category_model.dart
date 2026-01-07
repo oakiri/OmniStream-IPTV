@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 
 part 'category_model.g.dart';
 
-@HiveType(typeId: 1)
+@HiveType(typeId: 3)
 class CategoryModel extends Equatable {
   @HiveField(0)
   final String name;

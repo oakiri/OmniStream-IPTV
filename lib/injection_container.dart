@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_local_data_source.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_parser.dart';
 import 'package:omnistream_iptv/features/playlist/data/models/channel_model.dart';
@@ -143,7 +143,7 @@ Future<void> init() async {
     () => FavoriteRemoteDataSourceImpl(firestore: sl()),
   );
 
-  sl.registerLazySingleton<Box<PlaylistProfileModel>>(
-    () => Hive.box<PlaylistProfileModel>('playlist_profiles'),
-  );
+    // Open the box before registering it
+  final playlistProfileBox = await Hive.openBox<PlaylistProfileModel>('playlist_profiles');
+  sl.registerLazySingleton<Box<PlaylistProfileModel>>(() => playlistProfileBox);
 }
