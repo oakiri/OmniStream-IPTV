@@ -5,6 +5,8 @@ import 'package:media_kit/media_kit.dart';
 import 'package:omnistream_iptv/core/database/hive_service.dart';
 import 'package:omnistream_iptv/injection_container.dart' as di;
 import 'package:omnistream_iptv/core/router/app_router.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:omnistream_iptv/features/auth/domain/usecases/sign_in_anonymously.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +45,13 @@ void main() async {
     // Initialize dependency injection
     print('[MAIN] Initializing dependency injection...');
     await di.init();
+
+    // Initialize Firebase
+    await Firebase.initializeApp();
+
+    // Sign in anonymously
+    final signInAnonymously = di.sl<SignInAnonymously>();
+    await signInAnonymously(NoParams());
     print('✓ [MAIN] Dependency injection initialized');
   } catch (e) {
     print('❌ [MAIN] Error initializing DI: $e');

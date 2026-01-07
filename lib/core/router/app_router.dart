@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/pages/home_page.dart';
+
+import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_dashboard_page.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/pages/player_page.dart';
 
 final appRouter = GoRouter(
@@ -9,7 +10,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/',
       name: 'home',
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) => const PlaylistDashboardPage(),
     ),
     GoRoute(
       path: '/player',

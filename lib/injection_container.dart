@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_local_data_source.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_parser.dart';
 import 'package:omnistream_iptv/features/playlist/data/models/channel_model.dart';
@@ -10,6 +9,21 @@ import 'package:omnistream_iptv/features/playlist/data/repositories/playlist_rep
 import 'package:omnistream_iptv/features/playlist/domain/repositories/playlist_repository.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_bloc.dart';
+import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:omnistream_iptv/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:omnistream_iptv/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:omnistream_iptv/features/auth/domain/repositories/auth_repository.dart';
+import 'package:omnistream_iptv/features/auth/domain/usecases/sign_in_anonymously.dart';
+import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_profile_local_data_source.dart';
+import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_profile_remote_data_source.dart';
+import 'package:omnistream_iptv/features/playlist/data/models/playlist_profile_model.dart';
+import 'package:omnistream_iptv/features/playlist/data/repositories/playlist_profile_repository_impl.dart';
+import 'package:omnistream_iptv/features/playlist/domain/repositories/playlist_profile_repository.dart';
+import 'package:omnistream_iptv/features/playlist/domain/usecases/add_playlist_profile.dart';
+import 'package:omnistream_iptv/features/playlist/domain/usecases/delete_playlist_profile.dart';
+import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist_profiles.dart';
 
 final sl = GetIt.instance;
 
@@ -18,6 +32,13 @@ Future<void> init() async {
   sl.registerFactory(
     () => PlaylistBloc(
       getPlaylist: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => PlaylistProfileBloc(
+      getPlaylistProfiles: sl(),
+      addPlaylistProfile: sl(),
+      deletePlaylistProfile: sl(),
     ),
   );
 
@@ -63,4 +84,49 @@ Future<void> init() async {
   });
   
   sl.registerLazySingleton<Box<ChannelModel>>(() => Hive.box<ChannelModel>('channels'));
+
+  // Auth
+  // Use cases
+  sl.registerLazySingleton(() => SignInAnonymously(sl()));
+
+  // Repository
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<AuthRemoteDataSource>(
+    () => AuthRemoteDataSourceImpl(firebaseAuth: sl()),
+  );
+
+  // External
+  sl.registerLazySingleton(() => FirebaseAuth.instance);
+  sl.registerLazySingleton(() => FirebaseFirestore.instance);
+
+  // Playlist Profiles
+  // Use cases
+  sl.registerLazySingleton(() => AddPlaylistProfile(sl()));
+  sl.registerLazySingleton(() => DeletePlaylistProfile(sl()));
+  sl.registerLazySingleton(() => GetPlaylistProfiles(sl()));
+
+  // Repository
+  sl.registerLazySingleton<PlaylistProfileRepository>(
+    () => PlaylistProfileRepositoryImpl(
+      localDataSource: sl(),
+      remoteDataSource: sl(),
+      firebaseAuth: sl(),
+    ),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<PlaylistProfileLocalDataSource>(
+    () => PlaylistProfileLocalDataSourceImpl(box: sl()),
+  );
+  sl.registerLazySingleton<PlaylistProfileRemoteDataSource>(
+    () => PlaylistProfileRemoteDataSourceImpl(firestore: sl()),
+  );
+
+  sl.registerLazySingleton<Box<PlaylistProfileModel>>(
+    () => Hive.box<PlaylistProfileModel>('playlist_profiles'),
+  );
 }
