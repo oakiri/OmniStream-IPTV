@@ -24,6 +24,10 @@ import 'package:omnistream_iptv/features/playlist/domain/repositories/playlist_p
 import 'package:omnistream_iptv/features/playlist/domain/usecases/add_playlist_profile.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/delete_playlist_profile.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist_profiles.dart';
+import 'package:omnistream_iptv/features/playlist/data/datasources/favorite_remote_data_source.dart';
+import 'package:omnistream_iptv/features/playlist/domain/repositories/favorite_repository.dart';
+import 'package:omnistream_iptv/features/playlist/data/repositories/favorite_repository_impl.dart';
+import 'package:omnistream_iptv/features/playlist/domain/usecases/toggle_favorite.dart';
 
 final sl = GetIt.instance;
 
@@ -108,11 +112,19 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddPlaylistProfile(sl()));
   sl.registerLazySingleton(() => DeletePlaylistProfile(sl()));
   sl.registerLazySingleton(() => GetPlaylistProfiles(sl()));
+  sl.registerLazySingleton(() => ToggleFavorite(repository: sl()));
 
   // Repository
   sl.registerLazySingleton<PlaylistProfileRepository>(
     () => PlaylistProfileRepositoryImpl(
       localDataSource: sl(),
+      remoteDataSource: sl(),
+      firebaseAuth: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<FavoriteRepository>(
+    () => FavoriteRepositoryImpl(
       remoteDataSource: sl(),
       firebaseAuth: sl(),
     ),
@@ -124,6 +136,10 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<PlaylistProfileRemoteDataSource>(
     () => PlaylistProfileRemoteDataSourceImpl(firestore: sl()),
+  );
+
+  sl.registerLazySingleton<FavoriteRemoteDataSource>(
+    () => FavoriteRemoteDataSourceImpl(firestore: sl()),
   );
 
   sl.registerLazySingleton<Box<PlaylistProfileModel>>(

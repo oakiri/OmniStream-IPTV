@@ -9,6 +9,7 @@ import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_eve
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_state.dart';
 import 'package:omnistream_iptv/injection_container.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
+import '../widgets/toggle_favorite_button.dart';
 
 class ChannelListPage extends StatefulWidget {
   final String playlistUrl;
@@ -264,6 +265,7 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
                   ],
                 ),
               ),
+              ToggleFavoriteButton(channel: channel),
               const Icon(Icons.play_arrow, color: Colors.deepPurple),
             ],
           ),
