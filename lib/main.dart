@@ -50,8 +50,10 @@ void main() async {
     await di.init();
 
     try {
-      // Initialize Firebase
-      print('[MAIN] Initializing Firebase...');
+      // Initialize Firebase. 
+      // IMPORTANT: This requires the google-services.json file to be placed in android/app/google-services.json
+      // If the file is missing, Firebase will fail to initialize, but the app will continue to run without Firebase features.
+      print("[MAIN] Initializing Firebase...");
       await Firebase.initializeApp();
       print('✓ [MAIN] Firebase initialized');
 

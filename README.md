@@ -248,3 +248,14 @@ Para preguntas o sugerencias, contacta al equipo de desarrollo.
 ---
 
 **Última actualización**: Enero 2026
+
+
+## 🔥 Configuración de Firebase
+
+Para que la integración con Firebase funcione correctamente, es **crucial** añadir el archivo `google-services.json` en la siguiente ruta:
+
+```
+android/app/google-services.json
+```
+
+Si este archivo no está presente, la aplicación mostrará una advertencia en la consola y continuará ejecutándose sin las funcionalidades de Firebase (sincronización en la nube, Crashlytics, etc.).
