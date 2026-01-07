@@ -41,7 +41,7 @@ dependencies:
   # Firebase
   firebase_core: ^2.24.0
   firebase_analytics: ^10.7.0
-  firebase_crashlytics: ^3.4.0
+  firebase_crashlytics: ^3.5.7
   firebase_remote_config: ^4.3.0
   
   # UI & Navigation
@@ -74,6 +74,7 @@ dependencies:
   firebase_auth: ^4.16.0
   cloud_firestore: ^4.17.5
   flutter_focus_watcher: ^2.0.0
+  firebase_performance: ^0.9.4+7
 
 dev_dependencies:
   flutter_test:

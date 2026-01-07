@@ -7,6 +7,8 @@ import 'package:omnistream_iptv/injection_container.dart' as di;
 import 'package:omnistream_iptv/core/router/app_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:omnistream_iptv/features/auth/domain/usecases/sign_in_anonymously.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +54,12 @@ void main() async {
     // Sign in anonymously
     final signInAnonymously = di.sl<SignInAnonymously>();
     await signInAnonymously(NoParams());
+
+    // Initialize Crashlytics and Performance Monitoring
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+    await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+
     print('✓ [MAIN] Dependency injection initialized');
   } catch (e) {
     print('❌ [MAIN] Error initializing DI: $e');
