@@ -6,7 +6,10 @@ import 'package:media_kit/media_kit.dart';
 import 'package:go_router/go_router.dart'; // NECESARIO PARA LA NAVEGACIÓN
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_dashboard_page.dart';
+import 'package:omnistream_iptv/core/theme/app_theme.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/channel_list_page.dart';
+import 'package:omnistream_iptv/features/channels/presentation/pages/video_player_page.dart';
+import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
 import 'injection_container.dart' as di;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -35,6 +38,21 @@ final _router = GoRouter(
           );
         }
         return ChannelListPage(url: playlistUrl);
+      },
+    ),
+    GoRoute(
+      path: '/player',
+      name: 'player',
+      builder: (context, state) {
+        final channel = state.extra as Channel?;
+        if (channel == null) {
+          return const Scaffold(
+            body: Center(
+              child: Text('Error: Channel no proporcionado.'),
+            ),
+          );
+        }
+        return VideoPlayerPage(channel: channel);
       },
     ),
   ],
@@ -89,10 +107,7 @@ class MyApp extends StatelessWidget {
         routerConfig: _router, // Conectamos el sistema de rutas
         title: 'OmniStream IPTV',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.darkTheme,
       ),
     );
   }

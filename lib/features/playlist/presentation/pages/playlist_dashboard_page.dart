@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
 import 'package:omnistream_iptv/injection_container.dart';
 import '../widgets/add_playlist_dialog.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
-
-// IMPORTS CORREGIDOS: Solo importamos el Bloc principal
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 
 class PlaylistDashboardPage extends StatefulWidget {
@@ -24,7 +21,6 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
   void initState() {
     super.initState();
     _profileBloc = sl<PlaylistProfileBloc>();
-    // CORREGIDO: Usamos LoadPlaylistProfiles() que es el evento correcto
     _profileBloc.add(LoadPlaylistProfiles());
   }
 
@@ -45,14 +41,9 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'My IPTV Playlists',
-          style: GoogleFonts.roboto(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          'OmniStream IPTV',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.deepPurple,
-        elevation: 0,
       ),
       body: BlocProvider(
         create: (_) => _profileBloc,
@@ -93,56 +84,60 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
             const SizedBox(height: 16),
             Text(
               'No playlists found',
-              style: GoogleFonts.roboto(fontSize: 18, color: Colors.grey),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.grey),
             ),
             const SizedBox(height: 8),
             Text(
               'Tap the + button to add your first list.',
-              style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
             ),
           ],
         ),
       );
     }
 
-    return FocusTraversalGroup(
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: profiles.length,
-        itemBuilder: (context, index) {
-          final profile = profiles[index];
-          return FocusWatcher(
-            child: Builder(
-              builder: (context) {
-                final isFocused = Focus.of(context).hasPrimaryFocus;
-                return Card(
-                  elevation: isFocused ? 8 : 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  color: isFocused ? Colors.deepPurple.shade100 : null,
-                  child: ListTile(
-                    leading: const Icon(Icons.live_tv, color: Colors.deepPurple),
-                    title: Text(
-                      profile.name,
-                      style: GoogleFonts.roboto(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      'Last updated: ${profile.lastUpdated.toLocal().toString().split(' ')[0]}',
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      // CORREGIDO: DeleteProfileEvent debe estar reconocido ahora
-                      onPressed: () => _profileBloc.add(DeleteProfileEvent(profile.id)),
-                    ),
-                    onTap: () {
-                      context.pushNamed('channels', extra: profile.url);
-                    },
-                  ),
-                );
-              },
-            ),
-          );
-        },
+    return GridView.builder(
+      padding: const EdgeInsets.all(16.0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.8,
       ),
+      itemCount: profiles.length,
+      itemBuilder: (context, index) {
+        final profile = profiles[index];
+        return FocusWatcher(
+          child: Builder(
+            builder: (context) {
+              final isFocused = Focus.of(context).hasPrimaryFocus;
+              return Card(
+                elevation: isFocused ? 12 : 4,
+                child: InkWell(
+                  onTap: () => context.pushNamed('channels', extra: profile.url),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.tv, size: 64),
+                      const SizedBox(height: 16),
+                      Text(
+                        profile.name,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => context.pushNamed('channels', extra: profile.url),
+                        child: const Text('ENTRAR'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
