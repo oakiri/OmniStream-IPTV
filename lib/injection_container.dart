@@ -1,6 +1,11 @@
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
+import 'package:omnistream_iptv/features/channels/data/datasources/channel_remote_data_source.dart';
+import 'package:omnistream_iptv/features/channels/data/repositories/channel_repository_impl.dart';
+import 'package:omnistream_iptv/features/channels/domain/repositories/channel_repository.dart';
+import 'package:omnistream_iptv/features/channels/domain/usecases/get_channels.dart';
+import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // IMPORTANTE: Necesario para el tipo User
 import 'package:omnistream_iptv/core/errors/failures.dart'; // CORREGIDO: errors (plural)
@@ -61,6 +66,12 @@ Future<void> init() async {
   //! Features - Auth
   sl.registerLazySingleton(() => SignInAnonymously(sl()));
   sl.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
+
+  //! Features - Channels
+  sl.registerFactory(() => ChannelBloc(getChannels: sl()));
+  sl.registerLazySingleton(() => GetChannels(sl()));
+  sl.registerLazySingleton<ChannelRepository>(() => ChannelRepositoryImpl(remoteDataSource: sl()));
+  sl.registerLazySingleton<ChannelRemoteDataSource>(() => ChannelRemoteDataSourceImpl(client: sl()));
 
   //! External
   sl.registerLazySingleton(() => http.Client());

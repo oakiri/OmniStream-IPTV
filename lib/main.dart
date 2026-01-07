@@ -6,6 +6,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:go_router/go_router.dart'; // NECESARIO PARA LA NAVEGACIÓN
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_dashboard_page.dart';
+import 'package:omnistream_iptv/features/channels/presentation/pages/channel_list_page.dart';
 import 'injection_container.dart' as di;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -26,34 +27,14 @@ final _router = GoRouter(
         // Recuperamos la URL que pasamos desde el Dashboard
         final playlistUrl = state.extra as String?;
         
-        // PANTALLA TEMPORAL DE CANALES
-        // (Aquí conectarás tu ChannelListPage real más adelante)
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Lista de Canales'),
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-          ),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.tv, size: 64, color: Colors.deepPurple),
-                const SizedBox(height: 16),
-                const Text(
-                  'Cargando canales desde:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(playlistUrl ?? 'URL desconocida', textAlign: TextAlign.center),
-                ),
-                const SizedBox(height: 20),
-                const CircularProgressIndicator(),
-              ],
+        if (playlistUrl == null) {
+          return const Scaffold(
+            body: Center(
+              child: Text('Error: URL de la lista no proporcionada.'),
             ),
-          ),
-        );
+          );
+        }
+        return ChannelListPage(url: playlistUrl);
       },
     ),
   ],
