@@ -76,6 +76,9 @@ dependencies:
   internet_connection_checker: ^1.0.0+1
   shimmer: ^3.0.0
   media_kit_libs_video: ^1.0.7
+  volume_controller: ^3.4.1
+  screen_brightness: ^2.1.7
+  battery_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:

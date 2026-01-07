@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,7 +19,7 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
   late TabController _tabController;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _urlController = TextEditingController();
-  final TextEditingController _xtreamUrlController = TextEditingController();
+  final TextEditingController _serverController = TextEditingController();
   final TextEditingController _xtreamUsernameController = TextEditingController();
   final TextEditingController _xtreamPasswordController = TextEditingController();
 
@@ -33,7 +34,7 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
     _tabController.dispose();
     _nameController.dispose();
     _urlController.dispose();
-    _xtreamUrlController.dispose();
+    _serverController.dispose();
     _xtreamUsernameController.dispose();
     _xtreamPasswordController.dispose();
     super.dispose();
@@ -64,17 +65,17 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
       }
     } else {
       // Xtream Codes logic
-      final xtreamUrl = _xtreamUrlController.text.trim();
+      final server = _serverController.text.trim();
       final username = _xtreamUsernameController.text.trim();
       final password = _xtreamPasswordController.text.trim();
 
-      if (xtreamUrl.isEmpty || username.isEmpty || password.isEmpty) {
+      if (server.isEmpty || username.isEmpty || password.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please fill all Xtream Codes fields.')),
         );
         return;
       }
-      url = 'xtream://$xtreamUrl/$username/$password';
+      url = '$server/get.php?username=$username&password=$password&type=m3u_plus&output=ts';
     }
 
     final newProfile = PlaylistProfile(
@@ -142,9 +143,9 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
                     Column(
                       children: [
                         TextField(
-                          controller: _xtreamUrlController,
+                          controller: _serverController,
                           decoration: const InputDecoration(
-                            labelText: 'Server URL (e.g., http://provider.com:8080)',
+                            labelText: 'Server (e.g., http://provider.com:8080)',
                             border: OutlineInputBorder(),
                           ),
                         ),

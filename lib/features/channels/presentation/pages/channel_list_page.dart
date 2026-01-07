@@ -1,3 +1,4 @@
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -109,7 +110,7 @@ class _ChannelListPageState extends State<ChannelListPage> {
                             // AQUÍ ESTABA EL ERROR: Antes solo hacía print.
                             // AHORA: Navegamos al reproductor.
                             print('🚀 Navegando al player: ${channel.name}');
-                            context.push('/player', extra: channel);
+                            context.push("/player", extra: {"channel": channel, "channels": filteredChannels});
                           },
                         );
                       },

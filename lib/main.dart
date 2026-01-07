@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,7 +45,9 @@ final _router = GoRouter(
       path: '/player',
       name: 'player',
       builder: (context, state) {
-        final channel = state.extra as Channel?;
+        final extra = state.extra as Map<String, dynamic>?;
+        final channel = extra?["channel"] as Channel?;
+        final channels = extra?["channels"] as List<Channel>?;
         if (channel == null) {
           return const Scaffold(
             body: Center(
@@ -52,7 +55,7 @@ final _router = GoRouter(
             ),
           );
         }
-        return VideoPlayerPage(channel: channel);
+        return VideoPlayerPage(channel: channel, channels: channels ?? []);
       },
     ),
   ],
