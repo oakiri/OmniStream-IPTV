@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_local_data_source.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_parser.dart';
 import 'package:omnistream_iptv/features/playlist/data/models/channel_model.dart';

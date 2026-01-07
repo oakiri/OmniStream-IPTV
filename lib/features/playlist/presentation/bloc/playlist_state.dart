@@ -13,7 +13,7 @@ class PlaylistLoading extends PlaylistState {}
 
 class PlaylistLoaded extends PlaylistState {
   final List<Channel> channels;
-  final List<Category> categories;
+  final List<playlist_category.Category> categories;
 
   const PlaylistLoaded({required this.channels, required this.categories});
 

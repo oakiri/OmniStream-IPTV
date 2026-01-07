@@ -37,7 +37,7 @@ class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
       await remoteDataSource.addPlaylistProfile(user.uid, profileModel);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 
@@ -51,7 +51,7 @@ class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
       await remoteDataSource.deletePlaylistProfile(user.uid, id);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 
@@ -73,7 +73,7 @@ class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
       }
       return Right(remoteProfiles);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 }

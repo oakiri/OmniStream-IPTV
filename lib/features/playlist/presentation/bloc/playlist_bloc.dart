@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/category.dart' as entity;
+import 'package:omnistream_iptv/features/playlist/domain/entities/category.dart' as playlist_category;
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist.dart';
@@ -37,7 +37,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
     });
   }
 
-  List<entity.Category> _groupChannelsIntoCategories(List<Channel> channels) {
+  List<playlist_category.Category> _groupChannelsIntoCategories(List<Channel> channels) {
     final categories = <String, List<String>>{};
     for (final channel in channels) {
       final group = channel.group ?? 'Uncategorized';
@@ -47,7 +47,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
       categories[group]!.add(channel.id);
     }
     return categories.entries
-        .map((entry) => entity.Category(name: entry.key, channels: entry.value))
+        .map((entry) => playlist_category.Category(name: entry.key, channels: entry.value))
         .toList();
   }
 

@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_bloc.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_event.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_state.dart';
+
+
 import 'package:omnistream_iptv/injection_container.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
 import '../widgets/toggle_favorite_button.dart';

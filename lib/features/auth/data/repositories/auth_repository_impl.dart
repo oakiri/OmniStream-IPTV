@@ -15,7 +15,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await remoteDataSource.signInAnonymously();
       return Right(user);
     } on FirebaseAuthException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(message: e.message ?? 'Unknown error'));
     }
   }
 }
