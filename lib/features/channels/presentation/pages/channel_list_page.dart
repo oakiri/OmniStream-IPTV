@@ -1,63 +1,70 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
+// IMPORTANTE: Estas dos líneas faltaban y son las que definen los estados y eventos
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_state.dart';
 import 'package:omnistream_iptv/injection_container.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
 
 class ChannelListPage extends StatefulWidget {
-  final String url;
+  final String playlistUrl;
 
-  const ChannelListPage({Key? key, required this.url}) : super(key: key);
+  const ChannelListPage({Key? key, required this.playlistUrl}) : super(key: key);
 
   @override
   State<ChannelListPage> createState() => _ChannelListPageState();
 }
 
 class _ChannelListPageState extends State<ChannelListPage> {
-  String? _selectedGroup;
+  // Filtro actual (Por defecto 'Todos')
+  String _selectedCategory = 'All';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocProvider(
-        create: (_) => sl<ChannelBloc>()..add(LoadChannels(widget.url)),
+        create: (context) => sl<ChannelBloc>()..add(LoadChannels(widget.playlistUrl)),
         child: BlocBuilder<ChannelBloc, ChannelState>(
           builder: (context, state) {
             if (state is ChannelLoading) {
-              return _buildLoading();
+              return const Center(child: CircularProgressIndicator());
             } else if (state is ChannelLoaded) {
-              final groups = state.channels.map((c) => c.group).toSet().toList();
-              final filteredChannels = _selectedGroup == null
+              // 1. Extraer categorías únicas para los filtros
+              final categories = ['All', ...state.channels.map((e) => e.group ?? 'Otros').toSet().toList()];
+              
+              // 2. Filtrar canales según la categoría seleccionada
+              final filteredChannels = _selectedCategory == 'All'
                   ? state.channels
-                  : state.channels.where((c) => c.group == _selectedGroup).toList();
+                  : state.channels.where((c) => c.group == _selectedCategory).toList();
 
               return CustomScrollView(
                 slivers: [
+                  // --- BARRA SUPERIOR (App Bar flotante) ---
                   SliverAppBar(
-                    title: const Text('Channels'),
                     floating: true,
-                    pinned: true,
+                    title: const Text('Canales'),
                     bottom: PreferredSize(
-                      preferredSize: const Size.fromHeight(50.0),
+                      preferredSize: const Size.fromHeight(50),
                       child: SizedBox(
-                        height: 50.0,
+                        height: 50,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: groups.length,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          itemCount: categories.length,
                           itemBuilder: (context, index) {
-                            final group = groups[index];
+                            final cat = categories[index];
+                            final isSelected = cat == _selectedCategory;
                             return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                              child: ChoiceChip(
-                                label: Text(group ?? 'Other'),
-                                selected: _selectedGroup == group,
-                                onSelected: (selected) {
+                              padding: const EdgeInsets.only(right: 8),
+                              child: FilterChip(
+                                label: Text(cat),
+                                selected: isSelected,
+                                onSelected: (bool selected) {
                                   setState(() {
-                                    _selectedGroup = selected ? group : null;
+                                    _selectedCategory = cat;
                                   });
                                 },
                               ),
@@ -67,36 +74,42 @@ class _ChannelListPageState extends State<ChannelListPage> {
                       ),
                     ),
                   ),
+
+                  // --- LISTA DE CANALES ---
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final channel = filteredChannels[index];
                         return ListTile(
-                          leading: CachedNetworkImage(
-                            imageUrl: channel.logoUrl ?? '',
+                          leading: SizedBox(
                             width: 50,
                             height: 50,
-                            memCacheHeight: 100,
-                            placeholder: (context, url) => Shimmer.fromColors(
-                              baseColor: Colors.grey[800]!,
-                              highlightColor: Colors.grey[700]!,
-                              child: Container(
-                                color: Colors.black,
+                            child: CachedNetworkImage(
+                              imageUrl: channel.logoUrl ?? '',
+                              memCacheHeight: 100, // Optimización de memoria
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey[900],
+                                child: const Icon(Icons.tv, color: Colors.white),
                               ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: Colors.grey[800],
-                              child: Center(
-                                child: Text(
-                                  channel.name.isNotEmpty ? channel.name[0] : '?',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
+                              placeholder: (context, url) => Container(color: Colors.grey[900]),
+                              fit: BoxFit.contain,
                             ),
                           ),
-                          title: Text(channel.name),
+                          title: Text(
+                            channel.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            channel.group ?? 'Sin categoría',
+                            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          ),
                           onTap: () {
-                            print('Playing: ${channel.url}');
+                            // AQUÍ ESTABA EL ERROR: Antes solo hacía print.
+                            // AHORA: Navegamos al reproductor.
+                            print('🚀 Navegando al player: ${channel.name}');
+                            context.push('/player', extra: channel);
                           },
                         );
                       },
@@ -106,34 +119,11 @@ class _ChannelListPageState extends State<ChannelListPage> {
                 ],
               );
             } else if (state is ChannelError) {
-              return Center(child: Text(state.message));
+              return Center(child: Text('Error: ${state.message}'));
             }
-            return const SizedBox.shrink();
+            return const SizedBox();
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildLoading() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
-      child: ListView.builder(
-        itemCount: 10,
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: Container(
-              width: 50,
-              height: 50,
-              color: Colors.black,
-            ),
-            title: Container(
-              height: 16,
-              color: Colors.black,
-            ),
-          );
-        },
       ),
     );
   }

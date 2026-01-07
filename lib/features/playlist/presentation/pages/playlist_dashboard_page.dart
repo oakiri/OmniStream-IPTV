@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
 import 'package:omnistream_iptv/injection_container.dart';
 import '../widgets/add_playlist_dialog.dart';
-import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
+// Eliminamos imports innecesarios de FocusWatcher
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 
 class PlaylistDashboardPage extends StatefulWidget {
-  const PlaylistDashboardPage({Key? key}) : super(key: key);
+  const PlaylistDashboardPage({super.key});
 
   @override
   State<PlaylistDashboardPage> createState() => _PlaylistDashboardPageState();
@@ -74,6 +74,7 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
     );
   }
 
+  // --- AQUÍ ESTÁ LA CORRECCIÓN APLICADA ---
   Widget _buildLoadedState(List<PlaylistProfile> profiles) {
     if (profiles.isEmpty) {
       return Center(
@@ -107,34 +108,34 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
       itemCount: profiles.length,
       itemBuilder: (context, index) {
         final profile = profiles[index];
-        return FocusWatcher(
-          child: Builder(
-            builder: (context) {
-              final isFocused = Focus.of(context).hasPrimaryFocus;
-              return Card(
-                elevation: isFocused ? 12 : 4,
-                child: InkWell(
-                  onTap: () => context.pushNamed('channels', extra: profile.url),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.tv, size: 64),
-                      const SizedBox(height: 16),
-                      Text(
-                        profile.name,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => context.pushNamed('channels', extra: profile.url),
-                        child: const Text('ENTRAR'),
-                      ),
-                    ],
+        // FIX: Usamos Card estándar sin FocusWatcher manual para evitar crash
+        return Card(
+          elevation: 4,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => context.pushNamed('channels', extra: profile.url),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.tv, size: 64, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    profile.name,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              );
-            },
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.pushNamed('channels', extra: profile.url),
+                  child: const Text('ENTRAR'),
+                ),
+              ],
+            ),
           ),
         );
       },

@@ -37,7 +37,7 @@ final _router = GoRouter(
             ),
           );
         }
-        return ChannelListPage(url: playlistUrl);
+        return ChannelListPage(playlistUrl: playlistUrl); // <-- CORRECTO
       },
     ),
     GoRoute(
