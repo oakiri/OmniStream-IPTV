@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "177570420674",
+    "project_id": "omnistream-iptv",
+    "storage_bucket": "omnistream-iptv.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:177570420674:android:2a8d2230305c0aadf1e85b",
+        "android_client_info": {
+          "package_name": "com.omnistream.omnistream_iptv"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4uD24FwH1vJM35DHn1e0EoVsud0FRT18"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

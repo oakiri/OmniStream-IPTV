@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:omnistream_iptv/core/usecases/usecase.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_event.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_state.dart';
 import 'package:omnistream_iptv/injection_container.dart';
-import 'package:uuid/uuid.dart';
 import '../widgets/add_playlist_dialog.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
+
+// IMPORTS CORREGIDOS: Solo importamos el Bloc principal
+import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 
 class PlaylistDashboardPage extends StatefulWidget {
   const PlaylistDashboardPage({Key? key}) : super(key: key);
@@ -26,7 +24,8 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
   void initState() {
     super.initState();
     _profileBloc = sl<PlaylistProfileBloc>();
-    _profileBloc.add(GetProfilesEvent());
+    // CORREGIDO: Usamos LoadPlaylistProfiles() que es el evento correcto
+    _profileBloc.add(LoadPlaylistProfiles());
   }
 
   void _showAddPlaylistDialog() {
@@ -131,6 +130,7 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
+                      // CORREGIDO: DeleteProfileEvent debe estar reconocido ahora
                       onPressed: () => _profileBloc.add(DeleteProfileEvent(profile.id)),
                     ),
                     onTap: () {

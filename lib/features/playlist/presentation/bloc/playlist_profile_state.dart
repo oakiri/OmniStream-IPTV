@@ -1,5 +1,5 @@
-import 'package:equatable/equatable.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
+part of 'playlist_profile_bloc.dart';
+
 
 abstract class PlaylistProfileState extends Equatable {
   const PlaylistProfileState();

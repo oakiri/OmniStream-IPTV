@@ -73,6 +73,7 @@ dependencies:
   cloud_firestore: ^4.17.5
   flutter_focus_watcher: ^2.0.0
   firebase_performance: ^0.9.4+7
+  internet_connection_checker: ^1.0.0+1
 
 dev_dependencies:
   flutter_test:

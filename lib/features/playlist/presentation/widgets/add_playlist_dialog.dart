@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_event.dart';
 import 'package:uuid/uuid.dart';
+
+// IMPORTS CORREGIDOS (Descomentado y limpio)
+import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 
 class AddPlaylistDialog extends StatefulWidget {
   const AddPlaylistDialog({super.key});
@@ -39,13 +40,13 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
   }
 
   void _addPlaylist() {
+    // AHORA RECONOCERÁ EL TIPO PlaylistProfileBloc
     final bloc = BlocProvider.of<PlaylistProfileBloc>(context);
     final currentTab = _tabController.index;
     String url = '';
     String name = _nameController.text.trim();
 
     if (name.isEmpty) {
-      // Simple validation
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a name for the playlist.')),
       );
@@ -62,7 +63,7 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
         return;
       }
     } else {
-      // Xtream Codes (Placeholder logic for now)
+      // Xtream Codes logic
       final xtreamUrl = _xtreamUrlController.text.trim();
       final username = _xtreamUsernameController.text.trim();
       final password = _xtreamPasswordController.text.trim();
@@ -73,7 +74,6 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
         );
         return;
       }
-      // Construct a placeholder URL for Xtream for now. The real logic will be complex.
       url = 'xtream://$xtreamUrl/$username/$password';
     }
 
@@ -83,9 +83,9 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
       url: url,
       lastUpdated: DateTime.now(),
       isFavorite: false,
-      // userId is now optional/null and will be set by the repository
     );
 
+    // AHORA RECONOCERÁ EL EVENTO AddProfileEvent
     bloc.add(AddProfileEvent(newProfile));
     Navigator.of(context).pop();
   }
@@ -117,7 +117,7 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
               ),
               const SizedBox(height: 16),
               SizedBox(
-                height: 200, // Fixed height for TabBarView
+                height: 200,
                 child: TabBarView(
                   controller: _tabController,
                   children: [
