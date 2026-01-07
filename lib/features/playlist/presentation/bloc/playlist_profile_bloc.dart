@@ -1,11 +1,16 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:omnistream_iptv/core/errors/failures.dart';
 import 'package:omnistream_iptv/core/usecases/usecase.dart';
+
+import 'package:omnistream_iptv/core/usecases/no_params.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/add_playlist_profile.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/delete_playlist_profile.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist_profiles.dart';
 import 'playlist_profile_event.dart';
 import 'playlist_profile_state.dart';
+
+import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart' as entity;
 
 class PlaylistProfileBloc extends Bloc<PlaylistProfileEvent, PlaylistProfileState> {
   final GetPlaylistProfiles getPlaylistProfiles;
@@ -50,7 +55,7 @@ class PlaylistProfileBloc extends Bloc<PlaylistProfileEvent, PlaylistProfileStat
     final currentState = state;
     if (currentState is PlaylistProfileLoaded) {
       // Optimistic update
-      final newProfiles = List<PlaylistProfile>.from(currentState.profiles)..add(event.profile);
+      final newProfiles = List<entity.PlaylistProfile>.from(currentState.profiles)..add(event.profile);
       emit(PlaylistProfileLoaded(profiles: newProfiles));
     } else {
       emit(PlaylistProfileLoading());
