@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
@@ -8,6 +7,7 @@ import 'package:volume_controller/volume_controller.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:omnistream_iptv/features/channels/presentation/widgets/feedback_indicator.dart';
 
 class VideoPlayerPage extends StatefulWidget {
   final Channel channel;
@@ -25,6 +25,8 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> with WidgetsBindingOb
   late final VideoController videoController;
   Timer? _hideControlsTimer;
   bool _showControls = true;
+  bool _showVolumeIndicator = false;
+  bool _showBrightnessIndicator = false;
   double _volume = 0.5;
   double _brightness = 0.5;
   int _batteryLevel = 100;
@@ -100,6 +102,23 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> with WidgetsBindingOb
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details, bool isLeft) {
+        setState(() {
+      if (isLeft) {
+        _showBrightnessIndicator = true;
+      } else {
+        _showVolumeIndicator = true;
+      }
+    });
+
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() {
+          _showBrightnessIndicator = false;
+          _showVolumeIndicator = false;
+        });
+      }
+    });
+
     if (isLeft) {
       // Brightness
       setState(() {
@@ -117,7 +136,10 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> with WidgetsBindingOb
     }
   }
 
-  void _showChannelList() {
+    void _showChannelList() {
+    setState(() {
+      _showControls = false;
+    });
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -173,7 +195,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> with WidgetsBindingOb
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Video(controller: videoController),
+                        Video(controller: videoController),
+            if (_showVolumeIndicator)
+              FeedbackIndicator(icon: Icons.volume_up, value: _volume),
+            if (_showBrightnessIndicator)
+              FeedbackIndicator(icon: Icons.brightness_7, value: _brightness),
             if (_showControls) _buildOsd(),
           ],
         ),
@@ -219,7 +245,13 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> with WidgetsBindingOb
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(widget.channel.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Flexible(
+            child: Text(
+              widget.channel.name,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           Row(
             children: [
               const Chip(label: Text('FHD')),

@@ -1,11 +1,9 @@
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
-// IMPORTANTE: Estas dos líneas faltaban y son las que definen los estados y eventos
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_state.dart';
 import 'package:omnistream_iptv/injection_container.dart';
@@ -20,7 +18,6 @@ class ChannelListPage extends StatefulWidget {
 }
 
 class _ChannelListPageState extends State<ChannelListPage> {
-  // Filtro actual (Por defecto 'Todos')
   String _selectedCategory = 'All';
 
   @override
@@ -33,17 +30,13 @@ class _ChannelListPageState extends State<ChannelListPage> {
             if (state is ChannelLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is ChannelLoaded) {
-              // 1. Extraer categorías únicas para los filtros
               final categories = ['All', ...state.channels.map((e) => e.group ?? 'Otros').toSet().toList()];
-              
-              // 2. Filtrar canales según la categoría seleccionada
               final filteredChannels = _selectedCategory == 'All'
                   ? state.channels
                   : state.channels.where((c) => c.group == _selectedCategory).toList();
 
               return CustomScrollView(
                 slivers: [
-                  // --- BARRA SUPERIOR (App Bar flotante) ---
                   SliverAppBar(
                     floating: true,
                     title: const Text('Canales'),
@@ -75,19 +68,19 @@ class _ChannelListPageState extends State<ChannelListPage> {
                       ),
                     ),
                   ),
-
-                  // --- LISTA DE CANALES ---
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final channel = filteredChannels[index];
-                        return ListTile(
+                        return Focus(
+                          autofocus: index == 0,
+                          child: ListTile(
                           leading: SizedBox(
                             width: 50,
                             height: 50,
                             child: CachedNetworkImage(
                               imageUrl: channel.logoUrl ?? '',
-                              memCacheHeight: 100, // Optimización de memoria
+                              memCacheHeight: 100,
                               errorWidget: (context, url, error) => Container(
                                 color: Colors.grey[900],
                                 child: const Icon(Icons.tv, color: Colors.white),
@@ -109,12 +102,15 @@ class _ChannelListPageState extends State<ChannelListPage> {
                           onTap: () {
                             // AQUÍ ESTABA EL ERROR: Antes solo hacía print.
                             // AHORA: Navegamos al reproductor.
+                            print("🚀 Navegando al player: ");
+                          },
                             print('🚀 Navegando al player: ${channel.name}');
                             context.push("/player", extra: {"channel": channel, "channels": filteredChannels});
                           },
                         );
                       },
                       childCount: filteredChannels.length,
+                        ),);
                     ),
                   ),
                 ],
