@@ -9,6 +9,7 @@ import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_pro
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_state.dart';
 import 'package:omnistream_iptv/injection_container.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
 
 class PlaylistDashboardPage extends StatefulWidget {
   const PlaylistDashboardPage({Key? key}) : super(key: key);
@@ -103,33 +104,40 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: profiles.length,
-      itemBuilder: (context, index) {
-        final profile = profiles[index];
-        return Card(
-          elevation: 4,
-          margin: const EdgeInsets.only(bottom: 16),
-          child: ListTile(
-            leading: const Icon(Icons.live_tv, color: Colors.deepPurple),
-            title: Text(
-              profile.name,
-              style: GoogleFonts.roboto(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              'Last updated: ${profile.lastUpdated.toLocal().toString().split(' ')[0]}',
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _profileBloc.add(DeleteProfileEvent(profile.id)),
-            ),
-            onTap: () {
-              context.pushNamed('channels', extra: profile.url);
+    return FocusTraversalGroup(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: profiles.length,
+        itemBuilder: (context, index) {
+          final profile = profiles[index];
+          return FocusWatcher(
+            builder: (context, isFocused) {
+              return Card(
+                elevation: isFocused ? 8 : 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                color: isFocused ? Colors.deepPurple.shade100 : null,
+                child: ListTile(
+                  leading: const Icon(Icons.live_tv, color: Colors.deepPurple),
+                  title: Text(
+                    profile.name,
+                    style: GoogleFonts.roboto(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    'Last updated: ${profile.lastUpdated.toLocal().toString().split(' ')[0]}',
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _profileBloc.add(DeleteProfileEvent(profile.id)),
+                  ),
+                  onTap: () {
+                    context.pushNamed('channels', extra: profile.url);
+                  },
+                ),
+              );
             },
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

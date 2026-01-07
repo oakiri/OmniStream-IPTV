@@ -8,6 +8,7 @@ import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_blo
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_event.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_state.dart';
 import 'package:omnistream_iptv/injection_container.dart';
+import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
 
 class ChannelListPage extends StatefulWidget {
   final String playlistUrl;
@@ -179,22 +180,30 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
       return const Center(child: Text('No channels found for this filter.'));
     }
 
-    return ListView.builder(
-      itemCount: channels.length,
-      itemBuilder: (context, index) {
-        final channel = channels[index];
-        return _buildChannelTile(context, channel);
-      },
+    return FocusTraversalGroup(
+      child: ListView.builder(
+        itemCount: channels.length,
+        itemBuilder: (context, index) {
+          final channel = channels[index];
+          return FocusWatcher(
+            builder: (context, isFocused) {
+              return _buildChannelTile(context, channel, isFocused);
+            },
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildChannelTile(BuildContext context, Channel channel) {
+  Widget _buildChannelTile(BuildContext context, Channel channel, bool isFocused) {
     return GestureDetector(
       onTap: () {
         context.push('/player', extra: channel);
       },
       child: Card(
+        elevation: isFocused ? 8 : 4,
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        color: isFocused ? Colors.deepPurple.shade100 : null,
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: Row(
