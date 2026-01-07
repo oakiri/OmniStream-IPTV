@@ -4,6 +4,7 @@ import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_dashboard_page.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/pages/player_page.dart';
+import 'package:omnistream_iptv/features/playlist/presentation/pages/channel_list_page.dart';
 
 final appRouter = GoRouter(
   routes: [
@@ -18,6 +19,14 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final channel = state.extra as Channel;
         return PlayerPage(channel: channel);
+      },
+    ),
+    GoRoute(
+      path: '/channels',
+      name: 'channels',
+      builder: (context, state) {
+        final url = state.extra as String;
+        return ChannelListPage(playlistUrl: url);
       },
     ),
   ],

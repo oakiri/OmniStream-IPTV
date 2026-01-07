@@ -1,0 +1,262 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
+import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_bloc.dart';
+import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_event.dart';
+import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_state.dart';
+import 'package:omnistream_iptv/injection_container.dart';
+
+class ChannelListPage extends StatefulWidget {
+  final String playlistUrl;
+
+  const ChannelListPage({Key? key, required this.playlistUrl}) : super(key: key);
+
+  @override
+  State<ChannelListPage> createState() => _ChannelListPageState();
+}
+
+class _ChannelListPageState extends State<ChannelListPage> with TickerProviderStateMixin {
+  late PlaylistBloc _playlistBloc;
+  late TextEditingController _searchController;
+  late TabController _tabController;
+  String _searchQuery = '';
+  List<String> _categories = [];
+  String _selectedCategory = 'All';
+
+  @override
+  void initState() {
+    super.initState();
+    _playlistBloc = sl<PlaylistBloc>();
+    _searchController = TextEditingController();
+    _tabController = TabController(length: 1, vsync: this); // Initial length 1 for 'All'
+
+    // Load the playlist immediately
+    _playlistBloc.add(LoadPlaylist(widget.playlistUrl));
+
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _updateCategories(List<Channel> channels) {
+    final categories = channels
+        .map((c) => c.group)
+        .whereType<String>()
+        .toSet()
+        .toList()
+      ..sort();
+    
+    // Add 'All' as the first category
+    categories.insert(0, 'All');
+
+    // Check if the selected category still exists
+    if (!_categories.contains(_selectedCategory)) {
+      _selectedCategory = 'All';
+    }
+
+    setState(() {
+      _categories = categories;
+      _tabController = TabController(length: _categories.length, vsync: this);
+      _tabController.addListener(() {
+        if (!_tabController.indexIsChanging) {
+          setState(() {
+            _selectedCategory = _categories[_tabController.index];
+          });
+        }
+      });
+    });
+  }
+
+  List<Channel> _filterChannels(List<Channel> channels) {
+    List<Channel> filtered = channels;
+
+    // 1. Filter by Category
+    if (_selectedCategory != 'All') {
+      filtered = filtered.where((c) => c.group == _selectedCategory).toList();
+    }
+
+    // 2. Filter by Search Query
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((c) => c.name.toLowerCase().contains(query)).toList();
+    }
+
+    return filtered;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Channels',
+          style: GoogleFonts.roboto(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.deepPurple,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(100.0),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search channels...',
+                    prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            onPressed: () => _searchController.clear(),
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.deepPurple.shade700,
+                    hintStyle: const TextStyle(color: Colors.white70),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: _categories.map((category) => Tab(text: category)).toList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: BlocProvider<PlaylistBloc>.value(
+        value: _playlistBloc,
+        child: BlocConsumer<PlaylistBloc, PlaylistState>(
+          listener: (context, state) {
+            if (state is PlaylistError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error loading playlist: ${state.message}')),
+              );
+            } else if (state is PlaylistLoaded) {
+              _updateCategories(state.channels);
+            }
+          },
+          builder: (context, state) {
+            if (state is PlaylistLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is PlaylistLoaded) {
+              final filteredChannels = _filterChannels(state.channels);
+              return _buildLoadedState(filteredChannels);
+            } else if (state is PlaylistError) {
+              return Center(child: Text('Failed to load playlist: ${state.message}'));
+            }
+            return const Center(child: Text('Enter a playlist URL to begin.'));
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadedState(List<Channel> channels) {
+    if (channels.isEmpty) {
+      return const Center(child: Text('No channels found for this filter.'));
+    }
+
+    return ListView.builder(
+      itemCount: channels.length,
+      itemBuilder: (context, index) {
+        final channel = channels[index];
+        return _buildChannelTile(context, channel);
+      },
+    );
+  }
+
+  Widget _buildChannelTile(BuildContext context, Channel channel) {
+    return GestureDetector(
+      onTap: () {
+        context.push('/player', extra: channel);
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              if (channel.logoUrl != null && channel.logoUrl!.isNotEmpty)
+                CachedNetworkImage(
+                  imageUrl: channel.logoUrl!,
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => Container(
+                    width: 40,
+                    height: 40,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image, size: 20),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    width: 40,
+                    height: 40,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.broken_image, size: 20),
+                  ),
+                )
+              else
+                Container(
+                  width: 40,
+                  height: 40,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.video_library, size: 20),
+                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      channel.name,
+                      style: GoogleFonts.roboto(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (channel.group != null && channel.group!.isNotEmpty)
+                      Text(
+                        channel.group!,
+                        style: GoogleFonts.roboto(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.play_arrow, color: Colors.deepPurple),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

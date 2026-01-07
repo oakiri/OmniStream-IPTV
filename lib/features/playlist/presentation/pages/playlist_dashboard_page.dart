@@ -125,10 +125,7 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
               onPressed: () => _profileBloc.add(DeleteProfileEvent(profile.id)),
             ),
             onTap: () {
-              // TODO: Navigate to channel list page, passing the profile.url
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Loading playlist: ${profile.name}')),
-              );
+              context.pushNamed('channels', extra: profile.url);
             },
           ),
         );
