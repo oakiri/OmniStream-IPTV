@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_dashboard_page.dart';
 import 'package:omnistream_iptv/core/theme/app_theme.dart';
-import 'package:omnistream_iptv/features/channels/presentation/pages/channel_list_page.dart';
+import 'package:omnistream_iptv/features/channels/presentation/pages/channel_grid_page.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/video_player_page.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/quad_view_page.dart';
 import 'package:omnistream_iptv/features/navigation/presentation/pages/home_page.dart';
@@ -46,7 +46,7 @@ final _router = GoRouter(
             ),
           );
         }
-        return ChannelListPage(playlistUrl: playlistUrl);
+        return ChannelGridPage(playlistUrl: playlistUrl);
       },
     ),
     GoRoute(
