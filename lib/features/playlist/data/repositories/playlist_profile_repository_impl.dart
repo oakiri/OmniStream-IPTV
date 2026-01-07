@@ -29,6 +29,7 @@ class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
       url: profile.url,
       lastUpdated: profile.lastUpdated,
       isFavorite: profile.isFavorite,
+      userId: user.uid, // Add userId here
     );
 
     try {
@@ -66,6 +67,7 @@ class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
       }
 
       final remoteProfiles = await remoteDataSource.getPlaylistProfiles(user.uid);
+      // Sincronizar de remoto a local
       for (final profile in remoteProfiles) {
         await localDataSource.addPlaylistProfile(profile);
       }

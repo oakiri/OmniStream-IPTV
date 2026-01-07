@@ -27,12 +27,16 @@ class PlaylistProfileModel extends PlaylistProfile {
   @override
   final bool isFavorite;
 
+  @HiveField(5)
+  final String userId;
+
   const PlaylistProfileModel({
     required this.id,
     required this.name,
     required this.url,
     required this.lastUpdated,
     required this.isFavorite,
+    required this.userId,
   }) : super(
           id: id,
           name: name,

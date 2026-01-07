@@ -6,6 +6,7 @@ class PlaylistProfile extends Equatable {
   final String url;
   final DateTime lastUpdated;
   final bool isFavorite;
+  final String userId;
 
   const PlaylistProfile({
     required this.id,
@@ -13,8 +14,9 @@ class PlaylistProfile extends Equatable {
     required this.url,
     required this.lastUpdated,
     required this.isFavorite,
+    required this.userId,
   });
 
   @override
-  List<Object?> get props => [id, name, url, lastUpdated, isFavorite];
+  List<Object?> get props => [id, name, url, lastUpdated, isFavorite, userId];
 }
