@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/category.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
+import 'package:flutter/foundation.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist.dart';
 
 part 'playlist_event.dart';
@@ -48,5 +49,25 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
     return categories.entries
         .map((entry) => Category(name: entry.key, channels: entry.value))
         .toList();
+  }
+
+  // Lógica de filtrado en Isolate
+  static Future<List<Channel>> filterChannelsInIsolate(
+      List<Channel> channels, String query) {
+    return compute(_filterChannels, {'channels': channels, 'query': query});
+  }
+
+  static List<Channel> _filterChannels(Map<String, dynamic> data) {
+    final channels = data['channels'] as List<Channel>;
+    final query = data['query'] as String;
+
+    if (query.isEmpty) {
+      return channels;
+    }
+
+    final lowerCaseQuery = query.toLowerCase();
+    return channels.where((channel) {
+      return channel.name.toLowerCase().contains(lowerCaseQuery);
+    }).toList();
   }
 }

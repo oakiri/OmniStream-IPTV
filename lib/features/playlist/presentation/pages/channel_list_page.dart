@@ -80,21 +80,13 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
     });
   }
 
-  List<Channel> _filterChannels(List<Channel> channels) {
-    List<Channel> filtered = channels;
-
-    // 1. Filter by Category
+  // La lógica de filtrado se ha movido al BLoC para usar Isolates.
+  // Aquí solo se aplica el filtro de categoría.
+  List<Channel> _filterChannelsByCategory(List<Channel> channels) {
     if (_selectedCategory != 'All') {
-      filtered = filtered.where((c) => c.group == _selectedCategory).toList();
+      return channels.where((c) => c.group == _selectedCategory).toList();
     }
-
-    // 2. Filter by Search Query
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
-      filtered = filtered.where((c) => c.name.toLowerCase().contains(query)).toList();
-    }
-
-    return filtered;
+    return channels;
   }
 
   @override
@@ -163,8 +155,19 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
             if (state is PlaylistLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is PlaylistLoaded) {
-              final filteredChannels = _filterChannels(state.channels);
-              return _buildLoadedState(filteredChannels);
+              return FutureBuilder<List<Channel>>(
+                future: PlaylistBloc.filterChannelsInIsolate(state.channels, _searchQuery),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error filtering channels: ${snapshot.error}'));
+                  }
+                  final filteredChannels = snapshot.data ?? [];
+                  return _buildLoadedState(filteredChannels);
+                },
+              );
             } else if (state is PlaylistError) {
               return Center(child: Text('Failed to load playlist: ${state.message}'));
             }

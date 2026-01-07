@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+
 import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_parser.dart';
 import 'package:omnistream_iptv/features/playlist/data/models/channel_model.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
@@ -31,10 +31,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       final content = response.data.toString();
       print('[PlaylistRepository] Tamaño del contenido: ${content.length} bytes');
 
-      // Use compute to run parsing in a separate isolate.
       // Parser returns List<Channel> entities
       print('[PlaylistRepository] Iniciando parsing en Isolate...');
-      var channels = await compute(parser.parse, content);
+      var channels = await parser.parse(content);
       print('[PlaylistRepository] Parsing completado: ${channels.length} canales');
 
       // OPTIMIZATION: Limit to MAX_CHANNELS to prevent app crash
