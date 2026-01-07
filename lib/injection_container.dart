@@ -10,6 +10,11 @@ import 'package:omnistream_iptv/features/playlist/data/repositories/playlist_rep
 import 'package:omnistream_iptv/features/playlist/domain/repositories/playlist_repository.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_bloc.dart';
+import 'package:omnistream_iptv/features/epg/data/datasources/epg_remote_data_source.dart';
+import 'package:omnistream_iptv/features/epg/data/repositories/epg_repository_impl.dart';
+import 'package:omnistream_iptv/features/epg/domain/repositories/epg_repository.dart';
+import 'package:omnistream_iptv/features/epg/domain/usecases/get_epg_data.dart';
+import 'package:omnistream_iptv/features/epg/presentation/bloc/epg_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -63,4 +68,27 @@ Future<void> init() async {
   });
   
   sl.registerLazySingleton<Box<ChannelModel>>(() => Hive.box<ChannelModel>('channels'));
+
+  // EPG
+  // BLoC
+  sl.registerFactory(
+    () => EpgBloc(
+      getEpgData: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetEpgData(sl()));
+
+  // Repository
+  sl.registerLazySingleton<EpgRepository>(
+    () => EpgRepositoryImpl(
+      remoteDataSource: sl(),
+    ),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<EpgRemoteDataSource>(
+    () => EpgRemoteDataSourceImpl(dio: sl()),
+  );
 }

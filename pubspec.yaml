@@ -67,7 +67,7 @@ dependencies:
   dartz: ^0.10.1
   
   # XML Parsing (for EPG/XMLTV)
-  xml: ^6.3.0
+  xml: ^6.6.1
   
   # String Matching (Fuzzy matching for EPG)
   string_similarity: ^2.1.0

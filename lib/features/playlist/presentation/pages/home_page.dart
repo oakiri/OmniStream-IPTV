@@ -16,19 +16,33 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late TextEditingController _urlController;
+  late TextEditingController _epgUrlController;
   late PlaylistBloc _playlistBloc;
 
   @override
   void initState() {
     super.initState();
     _urlController = TextEditingController();
+    _epgUrlController = TextEditingController();
     _playlistBloc = sl<PlaylistBloc>();
   }
 
   @override
   void dispose() {
     _urlController.dispose();
+    _epgUrlController.dispose();
     super.dispose();
+  }
+
+  void _loadEpg() {
+    final url = _epgUrlController.text.trim();
+    if (url.isNotEmpty) {
+      context.push("/epg", extra: url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a valid EPG URL")),
+      );
+    }
   }
 
   void _loadPlaylist() {
@@ -73,6 +87,8 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   _buildUrlInput(),
                   const SizedBox(height: 24),
+                  _buildEpgInput(),
+                  const SizedBox(height: 24),
                   BlocBuilder<PlaylistBloc, PlaylistState>(
                     builder: (context, state) {
                       if (state is PlaylistInitial) {
@@ -93,6 +109,51 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEpgInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Enter EPG URL (optional)',
+          style: GoogleFonts.roboto(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _epgUrlController,
+          decoration: InputDecoration(
+            hintText: 'https://example.com/epg.xml',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            prefixIcon: const Icon(Icons.calendar_today),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _loadEpg,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: Text(
+              'Load EPG',
+              style: GoogleFonts.roboto(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -123,6 +184,13 @@ class _HomePageState extends State<HomePage> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _loadPlaylist,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _loadEpg,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               padding: const EdgeInsets.symmetric(vertical: 12),
