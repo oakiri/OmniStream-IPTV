@@ -15,6 +15,11 @@ import 'package:omnistream_iptv/features/epg/data/repositories/epg_repository_im
 import 'package:omnistream_iptv/features/epg/domain/repositories/epg_repository.dart';
 import 'package:omnistream_iptv/features/epg/domain/usecases/get_epg_data.dart';
 import 'package:omnistream_iptv/features/epg/presentation/bloc/epg_bloc.dart';
+import 'package:omnistream_iptv/features/xtream/data/datasources/xtream_remote_data_source.dart';
+import 'package:omnistream_iptv/features/xtream/data/repositories/xtream_repository_impl.dart';
+import 'package:omnistream_iptv/features/xtream/domain/repositories/xtream_repository.dart';
+import 'package:omnistream_iptv/features/xtream/domain/usecases/login.dart' as xtream_login;
+import 'package:omnistream_iptv/features/xtream/presentation/bloc/xtream_login_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -90,5 +95,28 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<EpgRemoteDataSource>(
     () => EpgRemoteDataSourceImpl(dio: sl()),
+  );
+
+  // Xtream
+  // BLoC
+  sl.registerFactory(
+    () => XtreamLoginBloc(
+      login: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => xtream_login.Login(sl()));
+
+  // Repository
+  sl.registerLazySingleton<XtreamRepository>(
+    () => XtreamRepositoryImpl(
+      remoteDataSource: sl(),
+    ),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<XtreamRemoteDataSource>(
+    () => XtreamRemoteDataSourceImpl(dio: sl()),
   );
 }

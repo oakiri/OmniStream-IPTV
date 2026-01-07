@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_bloc.dart';
 import 'package:omnistream_iptv/injection_container.dart';
+import 'package:omnistream_iptv/features/xtream/presentation/pages/xtream_login_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -14,10 +16,11 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late TextEditingController _urlController;
   late TextEditingController _epgUrlController;
   late PlaylistBloc _playlistBloc;
+  late TabController _tabController;
 
   @override
   void initState() {
@@ -25,12 +28,14 @@ class _HomePageState extends State<HomePage> {
     _urlController = TextEditingController();
     _epgUrlController = TextEditingController();
     _playlistBloc = sl<PlaylistBloc>();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
     _urlController.dispose();
     _epgUrlController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -69,42 +74,59 @@ class _HomePageState extends State<HomePage> {
         ),
         backgroundColor: Colors.deepPurple,
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'M3U Playlist'),
+            Tab(text: 'Xtream Codes'),
+          ],
+        ),
       ),
-      body: BlocProvider<PlaylistBloc>.value(
-        value: _playlistBloc,
-        child: BlocListener<PlaylistBloc, PlaylistState>(
-          listener: (context, state) {
-            if (state is PlaylistError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error: ${state.message}')),
-              );
-            }
-          },
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  _buildUrlInput(),
-                  const SizedBox(height: 24),
-                  _buildEpgInput(),
-                  const SizedBox(height: 24),
-                  BlocBuilder<PlaylistBloc, PlaylistState>(
-                    builder: (context, state) {
-                      if (state is PlaylistInitial) {
-                        return _buildInitialState();
-                      } else if (state is PlaylistLoading) {
-                        return _buildLoadingState();
-                      } else if (state is PlaylistLoaded) {
-                        return _buildLoadedState(state.channels);
-                      } else if (state is PlaylistError) {
-                        return _buildErrorState();
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ],
-              ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildM3uLogin(),
+          const XtreamLoginPage(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildM3uLogin() {
+    return BlocProvider<PlaylistBloc>.value(
+      value: _playlistBloc,
+      child: BlocListener<PlaylistBloc, PlaylistState>(
+        listener: (context, state) {
+          if (state is PlaylistError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: ${state.message}')),
+            );
+          }
+        },
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _buildUrlInput(),
+                const SizedBox(height: 24),
+                _buildEpgInput(),
+                const SizedBox(height: 24),
+                BlocBuilder<PlaylistBloc, PlaylistState>(
+                  builder: (context, state) {
+                    if (state is PlaylistInitial) {
+                      return _buildInitialState();
+                    } else if (state is PlaylistLoading) {
+                      return _buildLoadingState();
+                    } else if (state is PlaylistLoaded) {
+                      return _buildLoadedState(state.channels);
+                    } else if (state is PlaylistError) {
+                      return _buildErrorState();
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
             ),
           ),
         ),
@@ -184,13 +206,6 @@ class _HomePageState extends State<HomePage> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _loadPlaylist,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _loadEpg,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               padding: const EdgeInsets.symmetric(vertical: 12),
