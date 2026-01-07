@@ -9,6 +9,7 @@ import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_pro
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_state.dart';
 import 'package:omnistream_iptv/injection_container.dart';
 import 'package:uuid/uuid.dart';
+import '../widgets/add_playlist_dialog.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
 
 class PlaylistDashboardPage extends StatefulWidget {
@@ -28,15 +29,16 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
     _profileBloc.add(GetProfilesEvent());
   }
 
-  void _addTestProfile() {
-    final newProfile = PlaylistProfile(
-      id: const Uuid().v4(),
-      name: 'Test List ${DateTime.now().second}',
-      url: 'http://test.com/test.m3u',
-      lastUpdated: DateTime.now(),
-      isFavorite: false,
+  void _showAddPlaylistDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return BlocProvider<PlaylistProfileBloc>.value(
+          value: _profileBloc,
+          child: const AddPlaylistDialog(),
+        );
+      },
     );
-    _profileBloc.add(AddProfileEvent(newProfile));
   }
 
   @override
@@ -76,7 +78,7 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addTestProfile, // Will be replaced by a dialog to add a real list
+        onPressed: _showAddPlaylistDialog,
         child: const Icon(Icons.add),
       ),
     );
