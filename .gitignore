@@ -82,6 +82,10 @@ lib/generated_plugin_registrant.dart
 .env.local
 .env.*.local
 
+# Android
+local.properties
+/android/local.properties
+
 # Generated files
 *.g.dart
 *.freezed.dart
