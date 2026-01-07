@@ -37,8 +37,8 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
           value: _profileBloc,
           child: const AddPlaylistDialog(),
         );
-      },
-    );
+            },
+          ),
   }
 
   @override
@@ -113,12 +113,18 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
         itemBuilder: (context, index) {
           final profile = profiles[index];
           return FocusWatcher(
-            builder: (context, isFocused) {
-              return Card(
-                elevation: isFocused ? 8 : 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                color: isFocused ? Colors.deepPurple.shade100 : null,
-                child: ListTile(
+            child: FocusableActionDetector(
+              onShowFocusHighlight: (isFocused) {
+                // No-op, FocusWatcher handles the focus state
+              },
+              child: Builder(
+                builder: (context) {
+                  final isFocused = Focus.of(context).hasPrimaryFocus;
+                  return Card(
+                    elevation: isFocused ? 8 : 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    color: isFocused ? Colors.deepPurple.shade100 : null,
+                    child: ListTile(
                   leading: const Icon(Icons.live_tv, color: Colors.deepPurple),
                   title: Text(
                     profile.name,
@@ -137,7 +143,7 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
                 ),
               );
             },
-          );
+          ),
         },
       ),
     );

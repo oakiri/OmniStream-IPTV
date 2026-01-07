@@ -190,9 +190,17 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
         itemBuilder: (context, index) {
           final channel = channels[index];
           return FocusWatcher(
-            builder: (context, isFocused) {
-              return _buildChannelTile(context, channel, isFocused);
-            },
+            child: FocusableActionDetector(
+              onShowFocusHighlight: (isFocused) {
+                // No-op, FocusWatcher handles the focus state
+              },
+              child: Builder(
+                builder: (context) {
+                  final isFocused = Focus.of(context).hasPrimaryFocus;
+                  return _buildChannelTile(context, channel, isFocused);
+                },
+              ),
+            ),
           );
         },
       ),

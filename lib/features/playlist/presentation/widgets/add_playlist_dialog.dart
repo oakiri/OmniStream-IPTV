@@ -83,7 +83,7 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
       url: url,
       lastUpdated: DateTime.now(),
       isFavorite: false,
-      userId: '', // Will be filled by the repository using FirebaseAuth.currentUser.uid
+      // userId is now optional/null and will be set by the repository
     );
 
     bloc.add(AddProfileEvent(newProfile));
