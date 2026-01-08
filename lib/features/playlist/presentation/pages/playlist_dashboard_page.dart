@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
 import 'package:omnistream_iptv/injection_container.dart';
 import '../widgets/add_playlist_dialog.dart';
-// Eliminamos imports innecesarios de FocusWatcher
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 
 class PlaylistDashboardPage extends StatefulWidget {
@@ -39,59 +38,47 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(
+        backgroundColor: Colors.black,
+        title: const Text(
           'OmniStream IPTV',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
-      body: BlocProvider(
-        create: (_) => _profileBloc,
-        child: BlocConsumer<PlaylistProfileBloc, PlaylistProfileState>(
-          listener: (context, state) {
-            if (state is PlaylistProfileError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error: ${state.message}')),
-              );
-            }
-          },
+      body: BlocProvider.value(
+        value: _profileBloc,
+        child: BlocBuilder<PlaylistProfileBloc, PlaylistProfileState>(
           builder: (context, state) {
             if (state is PlaylistProfileLoading || state is PlaylistProfileInitial) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));
             } else if (state is PlaylistProfileLoaded) {
               return _buildLoadedState(state.profiles);
             } else if (state is PlaylistProfileError) {
-              return Center(child: Text('Failed to load profiles: ${state.message}'));
+              return Center(child: Text('Error: ${state.message}', style: const TextStyle(color: Colors.red)));
             }
-            return const Center(child: Text('Unknown state'));
+            return const Center(child: Text('Estado desconocido', style: TextStyle(color: Colors.white)));
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blueAccent,
         onPressed: _showAddPlaylistDialog,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 
-  // --- AQUÍ ESTÁ LA CORRECCIÓN APLICADA ---
   Widget _buildLoadedState(List<PlaylistProfile> profiles) {
     if (profiles.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.playlist_add, size: 80, color: Colors.grey),
+            const Icon(Icons.playlist_add, size: 80, color: Colors.blueAccent),
             const SizedBox(height: 16),
-            Text(
-              'No playlists found',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap the + button to add your first list.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-            ),
+            const Text('No hay listas', style: TextStyle(color: Colors.white, fontSize: 20)),
+            const Text('Pulsa + para añadir una', style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -108,31 +95,27 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
       itemCount: profiles.length,
       itemBuilder: (context, index) {
         final profile = profiles[index];
-        // FIX: Usamos Card estándar sin FocusWatcher manual para evitar crash
         return Card(
-          elevation: 4,
-          clipBehavior: Clip.antiAlias,
+          color: Colors.grey[900],
+          elevation: 8,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: InkWell(
             onTap: () => context.pushNamed('channels', extra: profile.url),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.tv, size: 64, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    profile.name,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                const Icon(Icons.tv, size: 64, color: Colors.blueAccent),
+                const SizedBox(height: 12),
+                Text(
+                  profile.name,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                FilledButton(
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
                   onPressed: () => context.pushNamed('channels', extra: profile.url),
-                  child: const Text('ENTRAR'),
+                  child: const Text('ENTRAR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

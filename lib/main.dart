@@ -84,20 +84,19 @@ final _router = GoRouter(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
   MediaKit.ensureInitialized();
 
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
-    print("⚠️ No se pudo cargar el archivo .env: $e");
+    debugPrint("⚠️ .env no encontrado");
   }
 
+  // Inicialización limpia de Firebase sin handlers zombis
   try {
     await Firebase.initializeApp();
-    
   } catch (e) {
-    
+    debugPrint("⚠️ Firebase no inicializado");
   }
 
   await Hive.initFlutter();

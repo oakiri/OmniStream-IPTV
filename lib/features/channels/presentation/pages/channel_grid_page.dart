@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_state.dart';
+import 'package:go_router/go_router.dart';
 
 class ChannelGridPage extends StatefulWidget {
   final String playlistUrl;
@@ -16,21 +16,19 @@ class ChannelGridPage extends StatefulWidget {
 }
 
 class _ChannelGridPageState extends State<ChannelGridPage> {
-  late ChannelBloc _channelBloc;
   String _searchQuery = '';
   String _selectedCategory = 'All';
 
   @override
-  void initState() {
-    super.initState();
-    // El BLoC será inyectado desde el widget padre
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _channelBloc,
-      child: Column(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text('Canales', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Column(
         children: [
           _buildSearchBar(),
           _buildCategoryFilter(),
@@ -38,7 +36,7 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
             child: BlocBuilder<ChannelBloc, ChannelState>(
               builder: (context, state) {
                 if (state is ChannelLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));
                 } else if (state is ChannelLoaded) {
                   final filteredChannels = state.channels.where((channel) {
                     final matchesCategory = _selectedCategory == 'All' || channel.group == _selectedCategory;
@@ -47,43 +45,53 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
                   }).toList();
 
                   return GridView.builder(
+                    padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
-                      childAspectRatio: 0.75,
+                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
                     ),
                     itemCount: filteredChannels.length,
                     itemBuilder: (context, index) {
                       final channel = filteredChannels[index];
-                      return Card(
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: CachedNetworkImage(
-                                imageUrl: channel.logoUrl ?? '',
-                                fit: BoxFit.contain,
-                                placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                                errorWidget: (context, url, error) => const Icon(Icons.tv, size: 48),
+                      return InkWell(
+                        onTap: () => context.pushNamed('player', extra: {"channel": channel, "channels": state.channels}),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: CachedNetworkImage(
+                                    imageUrl: channel.logoUrl ?? '',
+                                    placeholder: (context, url) => const Icon(Icons.tv, color: Colors.black45),
+                                    errorWidget: (context, url, error) => const Icon(Icons.tv, size: 40, color: Colors.black),
+                                  ),
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                channel.name,
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                              Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Text(
+                                  channel.name,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
                   );
-                } else if (state is ChannelError) {
-                  return Center(child: Text(state.message));
-                } else {
-                  return const Center(child: Text('No hay canales para mostrar'));
                 }
+                return const Center(child: Text('Cargando...', style: TextStyle(color: Colors.white)));
               },
             ),
           ),
@@ -96,15 +104,16 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextField(
-        onChanged: (query) {
-          setState(() {
-            _searchQuery = query;
-          });
-        },
-        decoration: const InputDecoration(
+        style: const TextStyle(color: Colors.white),
+        onChanged: (q) => setState(() => _searchQuery = q),
+        decoration: InputDecoration(
           hintText: 'Buscar canales...',
-          prefixIcon: Icon(Icons.search),
-          border: OutlineInputBorder(),
+          hintStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          filled: true,
+          fillColor: Colors.white10,
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white24)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.blueAccent)),
         ),
       ),
     );
@@ -123,15 +132,12 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
               itemBuilder: (context, index) {
                 final category = categories[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: ChoiceChip(
-                    label: Text(category!),
+                    label: Text(category!, style: TextStyle(color: _selectedCategory == category ? Colors.white : Colors.black)),
                     selected: _selectedCategory == category,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = category;
-                      });
-                    },
+                    selectedColor: Colors.blueAccent,
+                    onSelected: (val) => setState(() => _selectedCategory = category),
                   ),
                 );
               },
