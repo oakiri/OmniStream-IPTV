@@ -37,11 +37,20 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
     player = Player(
       configuration: const PlayerConfiguration(
-        bufferSize: 32 * 1024 * 1024,
+        bufferSize: 64 * 1024 * 1024, // 64MB para streams estables
       ),
     );
     videoController = VideoController(player);
-    player.open(Media(widget.channel.url));
+    // Abrir el stream con opciones de bajo delay
+    player.open(
+      Media(
+        widget.channel.url,
+        httpHeaders: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+      ),
+      play: true, // Comenzar a reproducir inmediatamente
+    );
     _startHideControlsTimer();
 
     VolumeController.instance.getVolume().then((volume) {

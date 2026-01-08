@@ -10,10 +10,13 @@ import 'package:omnistream_iptv/core/theme/app_theme.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/channel_grid_page.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/video_player_page.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/quad_view_page.dart';
+import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
+import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/navigation/presentation/pages/home_page.dart';
 import 'package:omnistream_iptv/features/speed_test/presentation/pages/speed_test_page.dart';
 import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
 import 'injection_container.dart' as di;
+import 'package:omnistream_iptv/injection_container.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final _router = GoRouter(
@@ -53,7 +56,10 @@ final _router = GoRouter(
             ),
           );
         }
-        return ChannelGridPage(playlistUrl: playlistUrl);
+        return BlocProvider(
+          create: (context) => sl<ChannelBloc>()..add(LoadChannels(playlistUrl)),
+          child: ChannelGridPage(playlistUrl: playlistUrl),
+        );
       },
     ),
     GoRoute(
