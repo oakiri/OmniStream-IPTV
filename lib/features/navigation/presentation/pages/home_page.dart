@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
+import 'package:omnistream_iptv/features/channels/presentation/pages/channel_grid_page.dart';
 import 'package:omnistream_iptv/features/navigation/presentation/widgets/top_navigation_bar.dart';
+import 'package:omnistream_iptv/injection_container.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -27,8 +31,12 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
-      body: Center(
-        child: Text('Página de ${_items[_selectedIndex]}'),
+      body: BlocProvider(
+        create: (context) => sl<ChannelBloc>(),
+        child: const ChannelGridPage(playlistUrl: '
+(ModalRoute.of(context)!.settings.arguments as String? ?? 
+'http://example.com/playlist.m3u'
+)
       ),
     );
   }

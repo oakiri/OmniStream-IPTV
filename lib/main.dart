@@ -82,9 +82,9 @@ void main() async {
 
   try {
     await Firebase.initializeApp();
-    print("✅ Firebase inicializado correctamente.");
+    
   } catch (e) {
-    print("⚠️ Falló Firebase (Falta google-services.json). Modo OFFLINE activado.");
+    
   }
 
   await Hive.initFlutter();
