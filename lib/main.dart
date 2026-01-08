@@ -17,11 +17,18 @@ import 'injection_container.dart' as di;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final _router = GoRouter(
-  initialLocation: '/home',
+  initialLocation: '/dashboard',
   routes: [
     GoRoute(
+      path: '/dashboard',
+      builder: (context, state) => const PlaylistDashboardPage(),
+    ),
+    GoRoute(
       path: '/home',
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) {
+        final playlistUrl = state.extra as String? ?? 'http://example.com/playlist.m3u';
+        return HomePage(playlistUrl: playlistUrl);
+      },
     ),
     GoRoute(
       path: '/speed_test',

@@ -23,7 +23,7 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
   @override
   void initState() {
     super.initState();
-    _channelBloc = ChannelBloc()..add(LoadChannels(widget.playlistUrl));
+    // El BLoC será inyectado desde el widget padre
   }
 
   @override

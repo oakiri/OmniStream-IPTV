@@ -75,42 +75,38 @@ class _ChannelListPageState extends State<ChannelListPage> {
                         return Focus(
                           autofocus: index == 0,
                           child: ListTile(
-                          leading: SizedBox(
-                            width: 50,
-                            height: 50,
-                            child: CachedNetworkImage(
-                              imageUrl: channel.logoUrl ?? '',
-                              memCacheHeight: 100,
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey[900],
-                                child: const Icon(Icons.tv, color: Colors.white),
+                            leading: SizedBox(
+                              width: 50,
+                              height: 50,
+                              child: CachedNetworkImage(
+                                imageUrl: channel.logoUrl ?? '',
+                                memCacheHeight: 100,
+                                errorWidget: (context, url, error) => Container(
+                                  color: Colors.grey[900],
+                                  child: const Icon(Icons.tv, color: Colors.white),
+                                ),
+                                placeholder: (context, url) => Container(color: Colors.grey[900]),
+                                fit: BoxFit.contain,
                               ),
-                              placeholder: (context, url) => Container(color: Colors.grey[900]),
-                              fit: BoxFit.contain,
                             ),
+                            title: Text(
+                              channel.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              channel.group ?? 'Sin categoría',
+                              style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                            ),
+                            onTap: () {
+                              print('🚀 Navegando al player: ${channel.name}');
+                              context.push("/player", extra: {"channel": channel, "channels": filteredChannels});
+                            },
                           ),
-                          title: Text(
-                            channel.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            channel.group ?? 'Sin categoría',
-                            style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                          ),
-                          onTap: () {
-                            // AQUÍ ESTABA EL ERROR: Antes solo hacía print.
-                            // AHORA: Navegamos al reproductor.
-                            print("🚀 Navegando al player: ");
-                          },
-                            print('🚀 Navegando al player: ${channel.name}');
-                            context.push("/player", extra: {"channel": channel, "channels": filteredChannels});
-                          },
                         );
                       },
                       childCount: filteredChannels.length,
-                        ),);
                     ),
                   ),
                 ],

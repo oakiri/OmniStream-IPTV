@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
+import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/channel_grid_page.dart';
 import 'package:omnistream_iptv/features/navigation/presentation/widgets/top_navigation_bar.dart';
 import 'package:omnistream_iptv/injection_container.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  final String playlistUrl;
+
+  const HomePage({Key? key, required this.playlistUrl}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -15,6 +18,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final _items = ['En Directo', 'Películas', 'Series', 'Catch Up'];
+  late ChannelBloc _channelBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _channelBloc = sl<ChannelBloc>()..add(LoadChannels(widget.playlistUrl));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,13 +41,16 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
-      body: BlocProvider(
-        create: (context) => sl<ChannelBloc>(),
-        child: const ChannelGridPage(playlistUrl: '
-(ModalRoute.of(context)!.settings.arguments as String? ?? 
-'http://example.com/playlist.m3u'
-)
+      body: BlocProvider.value(
+        value: _channelBloc,
+        child: ChannelGridPage(playlistUrl: widget.playlistUrl),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _channelBloc.close();
+    super.dispose();
   }
 }

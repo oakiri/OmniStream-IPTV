@@ -37,9 +37,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
     player = Player(
       configuration: const PlayerConfiguration(
-        hwdec: 'mediacodec-copy',
         bufferSize: 32 * 1024 * 1024,
-        title: 'OmniStream Player',
       ),
     );
     videoController = VideoController(player);
