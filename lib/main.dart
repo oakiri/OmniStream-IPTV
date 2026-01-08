@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
@@ -57,7 +58,7 @@ final _router = GoRouter(
           );
         }
         return BlocProvider(
-          create: (context) => sl<ChannelBloc>()..add(LoadChannels(playlistUrl)),
+          create: (context) => sl<ChannelBloc>()..add(SyncChannelsWithFirestore(playlistId: playlistUrl, url: playlistUrl)),
           child: ChannelGridPage(playlistUrl: playlistUrl),
         );
       },
@@ -92,11 +93,14 @@ void main() async {
     debugPrint("⚠️ .env no encontrado");
   }
 
-  // Inicialización limpia de Firebase sin handlers zombis
+  // Inicialización real de Firebase con opciones configuradas
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint("✅ Firebase inicializado correctamente");
   } catch (e) {
-    debugPrint("⚠️ Firebase no inicializado");
+    debugPrint("❌ Error al inicializar Firebase: $e");
   }
 
   await Hive.initFlutter();

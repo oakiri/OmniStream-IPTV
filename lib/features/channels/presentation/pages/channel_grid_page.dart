@@ -18,6 +18,26 @@ class ChannelGridPage extends StatefulWidget {
 class _ChannelGridPageState extends State<ChannelGridPage> {
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
+      // Usar el playlistUrl como ID temporal o extraer ID real
+      context.read<ChannelBloc>().add(LoadMoreChannels(widget.playlistUrl));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +56,39 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
             child: BlocBuilder<ChannelBloc, ChannelState>(
               builder: (context, state) {
                 if (state is ChannelLoading) {
-                  return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: Colors.blueAccent),
+                        SizedBox(height: 16),
+                        Text('Iniciando sincronización...', style: TextStyle(color: Colors.white)),
+                      ],
+                    ),
+                  );
+                } else if (state is ChannelSyncing) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: state.progress,
+                          color: Colors.blueAccent,
+                          backgroundColor: Colors.white10,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Sincronizando con la nube: ${state.current} / ${state.total}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${(state.progress * 100).toStringAsFixed(1)}%',
+                          style: const TextStyle(color: Colors.blueAccent),
+                        ),
+                      ],
+                    ),
+                  );
                 } else if (state is ChannelLoaded) {
                   final filteredChannels = state.channels.where((channel) {
                     final matchesCategory = _selectedCategory == 'All' || channel.group == _selectedCategory;
@@ -45,6 +97,7 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
                   }).toList();
 
                   return GridView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
@@ -52,8 +105,12 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
                     ),
-                    itemCount: filteredChannels.length,
+                    itemCount: state.hasReachedMax ? filteredChannels.length : filteredChannels.length + 1,
                     itemBuilder: (context, index) {
+                      if (index >= filteredChannels.length) {
+                        return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));
+                      }
+                      
                       final channel = filteredChannels[index];
                       return InkWell(
                         onTap: () => context.pushNamed('player', extra: {"channel": channel, "channels": state.channels}),
@@ -89,6 +146,22 @@ class _ChannelGridPageState extends State<ChannelGridPage> {
                         ),
                       );
                     },
+                  );
+                } else if (state is ChannelError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 60),
+                        const SizedBox(height: 16),
+                        Text(state.message, style: const TextStyle(color: Colors.white), textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => context.read<ChannelBloc>().add(SyncChannelsWithFirestore(playlistId: widget.playlistUrl, url: widget.playlistUrl)),
+                          child: const Text('Reintentar'),
+                        )
+                      ],
+                    ),
                   );
                 }
                 return const Center(child: Text('Cargando...', style: TextStyle(color: Colors.white)));

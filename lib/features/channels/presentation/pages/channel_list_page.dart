@@ -24,7 +24,7 @@ class _ChannelListPageState extends State<ChannelListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocProvider(
-        create: (context) => sl<ChannelBloc>()..add(LoadChannels(widget.playlistUrl)),
+        create: (context) => sl<ChannelBloc>()..add(LoadChannels(url: widget.playlistUrl, playlistId: widget.playlistUrl)),
         child: BlocBuilder<ChannelBloc, ChannelState>(
           builder: (context, state) {
             if (state is ChannelLoading) {

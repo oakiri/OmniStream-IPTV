@@ -37,9 +37,16 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
     player = Player(
       configuration: const PlayerConfiguration(
-        bufferSize: 64 * 1024 * 1024, // 64MB para streams estables
+        bufferSize: 8 * 1024 * 1024, // Inicio rápido con 8MB
       ),
     );
+    
+    // Escuchar el estado del buffer para monitorear estabilidad
+    player.stream.buffer.listen((buffer) {
+      if (buffer.inMilliseconds > 5000) {
+        // Buffer estable
+      }
+    });
     videoController = VideoController(player);
     // Abrir el stream con opciones de bajo delay
     player.open(
@@ -89,6 +96,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details, bool isLeft) {
+    setState(() {
+      _showControls = true;
+    });
+    _startHideControlsTimer();
+    
     if (isLeft) {
       setState(() {
         _brightness -= details.delta.dy / 200;
@@ -118,9 +130,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         child: Stack(
           children: [
             Video(controller: videoController),
-            _buildVolumeBar(),
-            _buildBrightnessBar(),
-            if (_showControls) _buildOsd(),
+            if (_showControls) ...[
+              _buildVolumeBar(),
+              _buildBrightnessBar(),
+              _buildOsd(),
+            ],
           ],
         ),
       ),

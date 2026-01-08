@@ -112,10 +112,21 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-                  onPressed: () => context.pushNamed('channels', extra: profile.url),
-                  child: const Text('ENTRAR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                SizedBox(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                      ),
+                      onPressed: () => context.pushNamed('channels', extra: profile.url),
+                      child: const Text('ENTRAR', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ),
               ],
             ),
