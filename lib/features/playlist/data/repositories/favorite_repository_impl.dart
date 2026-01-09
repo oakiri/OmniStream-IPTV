@@ -1,6 +1,6 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:omnistream_iptv/core/errors/failures.dart';
+import 'package:omnistream_iptv/core/error/failure.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/favorite_remote_data_source.dart';
 import 'package:omnistream_iptv/features/playlist/data/models/favorite_channel_model.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';

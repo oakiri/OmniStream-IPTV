@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 class QuadViewPage extends StatefulWidget {
   final List<Channel> channels;
@@ -13,65 +13,44 @@ class QuadViewPage extends StatefulWidget {
 }
 
 class _QuadViewPageState extends State<QuadViewPage> {
-  final List<Player> _players = [];
-  final List<VideoController> _videoControllers = [];
-  int _focusedPlayerIndex = 0;
+  late final List<Player> players;
+  late final List<VideoController> controllers;
 
   @override
   void initState() {
     super.initState();
-    for (int i = 0; i < 4; i++) {
-      final player = Player();
-      _players.add(player);
-      _videoControllers.add(VideoController(player));
-      if (i < widget.channels.length) {
-        player.open(Media(widget.channels[i].url));
-      }
+    final count = widget.channels.length > 4 ? 4 : widget.channels.length;
+    players = List.generate(count, (_) => Player());
+    controllers = players.map((p) => VideoController(p)).toList();
+
+    for (var i = 0; i < count; i++) {
+      // Usamos .url correctamente
+      players[i].open(Media(widget.channels[i].url)); 
     }
-    _players[_focusedPlayerIndex].setVolume(100);
   }
 
   @override
   void dispose() {
-    for (var player in _players) {
-      player.dispose();
-    }
+    for (var p in players) p.dispose();
     super.dispose();
-  }
-
-  void _setFocusedPlayer(int index) {
-    setState(() {
-      for (int i = 0; i < _players.length; i++) {
-        _players[i].setVolume(i == index ? 100 : 0);
-      }
-      _focusedPlayerIndex = index;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+      appBar: AppBar(title: const Text('Multiview')),
       body: GridView.builder(
+        itemCount: controllers.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           childAspectRatio: 16 / 9,
         ),
-        itemCount: 4,
         itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () => _setFocusedPlayer(index),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _focusedPlayerIndex == index
-                      ? Theme.of(context).colorScheme.secondary
-                      : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-              child: Video(controller: _videoControllers[index]),
-            ),
+          return Container(
+            margin: const EdgeInsets.all(2),
+            decoration: BoxDecoration(border: Border.all(color: Colors.white24)),
+            child: Video(controller: controllers[index]),
           );
         },
       ),

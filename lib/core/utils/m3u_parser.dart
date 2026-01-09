@@ -1,37 +1,75 @@
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
+﻿import 'package:uuid/uuid.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
-class M3UParser {
-  static Future<List<Channel>> parse(String m3uContent) async {
+class M3uParser {
+  static List<Channel> parse(String content) {
     final List<Channel> channels = [];
-    final lines = m3uContent.split('\n');
+    final lines = content.split('\n');
+    String? name;
+    String? logoUrl;
+    String? group;
+    String? tvgId;
+    String? tvgName;
 
     for (var i = 0; i < lines.length; i++) {
-      if (lines[i].startsWith('#EXTINF')) {
-        final infoLine = lines[i];
-        final urlLine = (i + 1 < lines.length) ? lines[i + 1].trim() : '';
+      String line = lines[i].trim();
 
-        if (urlLine.isNotEmpty && urlLine.startsWith('http')) {
-          final id = _extractAttribute(infoLine, 'tvg-id');
-          final name = infoLine.split(',').last.trim();
-          final logoUrl = _extractAttribute(infoLine, 'tvg-logo');
-          final group = _extractAttribute(infoLine, 'group-title');
+      if (line.startsWith('#EXTINF:')) {
+        // Parsear metadatos
+        final attributes = line.substring(8);
+        final parts = attributes.split(',');
+        
+        if (parts.length > 1) {
+          name = parts.last.trim();
+        }
 
+        // Extracci�n b�sica de atributos (se puede mejorar con Regex)
+        if (line.contains('tvg-logo="')) {
+          logoUrl = _extractAttribute(line, 'tvg-logo');
+        }
+        if (line.contains('group-title="')) {
+          group = _extractAttribute(line, 'group-title');
+        }
+        if (line.contains('tvg-id="')) {
+          tvgId = _extractAttribute(line, 'tvg-id');
+        }
+        if (line.contains('tvg-name="')) {
+          tvgName = _extractAttribute(line, 'tvg-name');
+        }
+
+      } else if (line.isNotEmpty && !line.startsWith('#')) {
+        // Es la URL
+        if (name != null) {
           channels.add(Channel(
-            id: id ?? name, // Use name as fallback for id
+            id: const Uuid().v4(),
             name: name,
-            url: urlLine,
+            url: line, // <--- CORREGIDO: Antes pon�a streamUrl
             logoUrl: logoUrl,
             group: group,
+            tvgId: tvgId,
+            tvgName: tvgName,
           ));
+          // Reiniciar variables
+          name = null;
+          logoUrl = null;
+          group = null;
+          tvgId = null;
+          tvgName = null;
         }
       }
     }
     return channels;
   }
 
-  static String? _extractAttribute(String line, String attribute) {
-    final regex = RegExp('$attribute="(.*?)"');
-    final match = regex.firstMatch(line);
-    return match?.group(1);
+  static String? _extractAttribute(String line, String key) {
+    final pattern = '$key="';
+    final startIndex = line.indexOf(pattern);
+    if (startIndex == -1) return null;
+    
+    final start = startIndex + pattern.length;
+    final end = line.indexOf('"', start);
+    if (end == -1) return null;
+    
+    return line.substring(start, end);
   }
 }

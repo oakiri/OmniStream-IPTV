@@ -1,75 +1,72 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:omnistream_iptv/features/channels/domain/repositories/channel_repository.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:omnistream_iptv/features/channels/domain/usecases/get_channels.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_state.dart';
+import 'package:omnistream_iptv/core/error/failure.dart'; // <--- Import correcto
 
 class ChannelBloc extends Bloc<ChannelEvent, ChannelState> {
-  final ChannelRepository repository;
+  final GetChannels getChannels;
 
-  ChannelBloc({required this.repository}) : super(ChannelInitial()) {
-    on<SyncChannelsWithFirestore>(_onSyncChannels);
+  ChannelBloc({required this.getChannels}) : super(ChannelInitial()) {
     on<LoadChannels>(_onLoadChannels);
+    on<SearchChannels>(_onSearchChannels);
+    on<FilterChannelsByGroup>(_onFilterChannelsByGroup);
     on<LoadMoreChannels>(_onLoadMoreChannels);
   }
 
-  Future<void> _onSyncChannels(
-    SyncChannelsWithFirestore event,
-    Emitter<ChannelState> emit,
-  ) async {
+  Future<void> _onLoadChannels(LoadChannels event, Emitter<ChannelState> emit) async {
     emit(ChannelLoading());
+    final result = await getChannels(event.url);
     
-    // 1. Obtener canales desde M3U
-    final failureOrChannels = await repository.getChannels(event.url);
-    
-    await failureOrChannels.fold(
-      (failure) async => emit(ChannelError(failure.message)),
-      (channels) async {
-        // 2. Sincronizar con Firestore con progreso
-        final syncResult = await repository.syncWithFirestore(
-          event.playlistId, 
-          channels,
-          onProgress: (current, total) {
-            emit(ChannelSyncing(current: current, total: total));
-          },
-        );
-
-        syncResult.fold(
-          (failure) => emit(ChannelError(failure.message)),
-          (_) => add(LoadChannels(url: event.url, playlistId: event.playlistId)),
-        );
-      },
+    result.fold(
+      // Asumimos que Failure tiene una propiedad message, si no, usamos toString()
+      (failure) => emit(ChannelError(_mapFailureToMessage(failure))),
+      (channels) => emit(ChannelLoaded(channels, hasReachedMax: false)),
     );
   }
 
-  Future<void> _onLoadChannels(
-    LoadChannels event,
-    Emitter<ChannelState> emit,
-  ) async {
-    emit(ChannelLoading());
-    final result = await repository.getChannelsPaginated(event.playlistId, limit: 50);
-    result.fold(
-      (failure) => emit(ChannelError(failure.message)),
-      (channels) => emit(ChannelLoaded(channels, hasReachedMax: channels.length < 50)),
-    );
+  void _onSearchChannels(SearchChannels event, Emitter<ChannelState> emit) {
+    if (state is ChannelLoaded) {
+      final currentState = state as ChannelLoaded;
+      final filtered = currentState.channels
+          .where((channel) => channel.name.toLowerCase().contains(event.query.toLowerCase()))
+          .toList();
+      emit(ChannelLoaded(filtered, hasReachedMax: currentState.hasReachedMax));
+    }
   }
 
-  Future<void> _onLoadMoreChannels(
-    LoadMoreChannels event,
-    Emitter<ChannelState> emit,
-  ) async {
-    if (state is! ChannelLoaded || (state as ChannelLoaded).hasReachedMax) return;
+  void _onFilterChannelsByGroup(FilterChannelsByGroup event, Emitter<ChannelState> emit) {
+    if (state is ChannelLoaded) {
+      final currentState = state as ChannelLoaded;
+      final filtered = currentState.channels
+          .where((channel) => channel.group == event.group) // Usamos .group que es el de playlist
+          .toList();
+      emit(ChannelLoaded(filtered, hasReachedMax: currentState.hasReachedMax));
+    }
+  }
 
-    final currentState = state as ChannelLoaded;
-    final result = await repository.getChannelsPaginated(event.playlistId, limit: 50);
-    
-    result.fold(
-      (failure) => emit(ChannelError(failure.message)),
-      (newChannels) {
-        emit(ChannelLoaded(
-          currentState.channels + newChannels,
-          hasReachedMax: newChannels.length < 50,
-        ));
-      },
-    );
+  Future<void> _onLoadMoreChannels(LoadMoreChannels event, Emitter<ChannelState> emit) async {
+    if (state is ChannelLoaded) {
+      final currentState = state as ChannelLoaded;
+      final result = await getChannels(event.playlistId); // Aqu� deber�as implementar paginaci�n real
+
+      result.fold(
+        (failure) => emit(ChannelError(_mapFailureToMessage(failure))),
+        (newChannels) {
+          emit(newChannels.isEmpty
+              ? currentState.copyWith(hasReachedMax: true)
+              : ChannelLoaded(
+                  currentState.channels + newChannels,
+                  hasReachedMax: false,
+                ));
+        },
+      );
+    }
+  }
+
+  String _mapFailureToMessage(Failure failure) {
+    // Si tu clase Failure tiene una propiedad 'message', �sala: return failure.message;
+    // Si no, devuelve un mensaje gen�rico o el toString:
+    return "Error al cargar canales: ${failure.toString()}";
   }
 }

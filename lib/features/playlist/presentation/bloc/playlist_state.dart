@@ -1,11 +1,12 @@
-part of 'playlist_bloc.dart';
-
+﻿import 'package:equatable/equatable.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
+// Si tienes categorías, impórtalas aquí, si no, eliminamos esa línea conflictiva
+// import 'package:omnistream_iptv/features/playlist/domain/entities/category.dart';
 
 abstract class PlaylistState extends Equatable {
   const PlaylistState();
-
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class PlaylistInitial extends PlaylistState {}
@@ -14,19 +15,16 @@ class PlaylistLoading extends PlaylistState {}
 
 class PlaylistLoaded extends PlaylistState {
   final List<Channel> channels;
-  final List<playlist_category.Category> categories;
-
-  const PlaylistLoaded({required this.channels, required this.categories});
+  // Eliminamos categories por ahora si está dando problemas de importación
+  const PlaylistLoaded(this.channels);
 
   @override
-  List<Object> get props => [channels, categories];
+  List<Object?> get props => [channels];
 }
 
 class PlaylistError extends PlaylistState {
   final String message;
-
   const PlaylistError(this.message);
-
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }

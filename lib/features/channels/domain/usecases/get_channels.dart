@@ -1,7 +1,8 @@
 import 'package:dartz/dartz.dart';
-import 'package:omnistream_iptv/core/errors/failures.dart';
+import 'package:omnistream_iptv/core/error/failure.dart'; // <--- CORREGIDO
 import 'package:omnistream_iptv/core/usecases/usecase.dart';
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
+// Usamos la entidad de playlist
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart'; 
 import 'package:omnistream_iptv/features/channels/domain/repositories/channel_repository.dart';
 
 class GetChannels implements UseCase<List<Channel>, String> {

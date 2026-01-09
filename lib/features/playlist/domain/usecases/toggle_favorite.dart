@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:omnistream_iptv/core/errors/failures.dart';
+import 'package:omnistream_iptv/core/error/failure.dart';
 import 'package:omnistream_iptv/core/usecases/usecase.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/playlist/domain/repositories/favorite_repository.dart';

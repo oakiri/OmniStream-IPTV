@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 abstract class ChannelEvent extends Equatable {
   const ChannelEvent();
@@ -34,4 +34,22 @@ class LoadMoreChannels extends ChannelEvent {
 
   @override
   List<Object?> get props => [playlistId];
+}
+
+// --- CLASES A�ADIDAS ---
+
+class SearchChannels extends ChannelEvent {
+  final String query;
+  const SearchChannels(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}
+
+class FilterChannelsByGroup extends ChannelEvent {
+  final String group;
+  const FilterChannelsByGroup(this.group);
+
+  @override
+  List<Object?> get props => [group];
 }

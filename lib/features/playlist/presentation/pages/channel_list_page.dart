@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+// Eliminamos CachedNetworkImage porque ya no lo usamos directamente
+// import 'package:cached_network_image/cached_network_image.dart'; 
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_bloc.dart';
-
-
 import 'package:omnistream_iptv/injection_container.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
 import '../widgets/toggle_favorite_button.dart';
+
+// --- IMPORTANTE: Importamos el nuevo widget ChannelLogo ---
+import 'package:omnistream_iptv/features/channels/presentation/widgets/channel_logo.dart'; 
 
 class ChannelListPage extends StatefulWidget {
   final String playlistUrl;
@@ -33,9 +35,8 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
     super.initState();
     _playlistBloc = sl<PlaylistBloc>();
     _searchController = TextEditingController();
-    _tabController = TabController(length: 1, vsync: this); // Initial length 1 for 'All'
+    _tabController = TabController(length: 1, vsync: this);
 
-    // Load the playlist immediately
     _playlistBloc.add(LoadPlaylist(widget.playlistUrl));
 
     _searchController.addListener(() {
@@ -60,10 +61,8 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
         .toList()
       ..sort();
     
-    // Add 'All' as the first category
     categories.insert(0, 'All');
 
-    // Check if the selected category still exists
     if (!_categories.contains(_selectedCategory)) {
       _selectedCategory = 'All';
     }
@@ -79,15 +78,6 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
         }
       });
     });
-  }
-
-  // La lógica de filtrado se ha movido al BLoC para usar Isolates.
-  // Aquí solo se aplica el filtro de categoría.
-  List<Channel> _filterChannelsByCategory(List<Channel> channels) {
-    if (_selectedCategory != 'All') {
-      return channels.where((c) => c.group == _selectedCategory).toList();
-    }
-    return channels;
   }
 
   @override
@@ -165,7 +155,14 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
                   if (snapshot.hasError) {
                     return Center(child: Text('Error filtering channels: ${snapshot.error}'));
                   }
-                  final filteredChannels = snapshot.data ?? [];
+                  // Aplicamos filtro de categoría localmente sobre el resultado de búsqueda
+                  var filteredChannels = snapshot.data ?? [];
+                  if (_selectedCategory != 'All') {
+                    filteredChannels = filteredChannels
+                        .where((c) => c.group == _selectedCategory)
+                        .toList();
+                  }
+
                   return _buildLoadedState(filteredChannels);
                 },
               );
@@ -220,32 +217,14 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
           padding: const EdgeInsets.all(8),
           child: Row(
             children: [
-              if (channel.logoUrl != null && channel.logoUrl!.isNotEmpty)
-                CachedNetworkImage(
-                  imageUrl: channel.logoUrl!,
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.contain,
-                  placeholder: (context, url) => Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image, size: 20),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.broken_image, size: 20),
-                  ),
-                )
-              else
-                Container(
-                  width: 40,
-                  height: 40,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.video_library, size: 20),
-                ),
+              // --- AQUÍ ESTÁ EL CAMBIO PRINCIPAL ---
+              // Usamos ChannelLogo que maneja SVGs, errores y carga automáticamente
+              ChannelLogo(
+                url: channel.logoUrl,
+                width: 40,
+                height: 40,
+              ),
+              // -------------------------------------
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

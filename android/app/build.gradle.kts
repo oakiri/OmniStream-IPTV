@@ -24,7 +24,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        
+        // 👇 AÑADE ESTO OBLIGATORIAMENTE
+        multiDexEnabled = true
         // CRITICAL: Configure NDK for native libraries (MediaKit libmpv.so)
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86_64"))

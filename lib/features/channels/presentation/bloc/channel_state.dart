@@ -1,5 +1,6 @@
-import 'package:equatable/equatable.dart';
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
+﻿import 'package:equatable/equatable.dart';
+// Aseguramos que importa la entidad correcta
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 abstract class ChannelState extends Equatable {
   const ChannelState();
@@ -29,6 +30,17 @@ class ChannelLoaded extends ChannelState {
   final bool hasReachedMax;
 
   const ChannelLoaded(this.channels, {this.hasReachedMax = false});
+
+  // --- M�TODO A�ADIDO ---
+  ChannelLoaded copyWith({
+    List<Channel>? channels,
+    bool? hasReachedMax,
+  }) {
+    return ChannelLoaded(
+      channels ?? this.channels,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+    );
+  }
 
   @override
   List<Object?> get props => [channels, hasReachedMax];

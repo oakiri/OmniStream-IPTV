@@ -1,10 +1,10 @@
 import 'package:hive/hive.dart';
-import 'package:equatable/equatable.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 part 'channel_model.g.dart';
 
 @HiveType(typeId: 0)
-class ChannelModel extends Equatable {
+class ChannelModel extends Channel {
   @HiveField(0)
   final String id;
 
@@ -26,8 +26,21 @@ class ChannelModel extends Equatable {
     this.logoUrl,
     required this.url,
     this.group,
-  });
+  }) : super(
+          id: id,
+          name: name,
+          logoUrl: logoUrl,
+          url: url,
+          group: group,
+        );
 
-  @override
-  List<Object?> get props => [id, name, logoUrl, url, group];
+  factory ChannelModel.fromEntity(Channel channel) {
+    return ChannelModel(
+      id: channel.id,
+      name: channel.name,
+      logoUrl: channel.logoUrl,
+      url: channel.url,
+      group: channel.group,
+    );
+  }
 }

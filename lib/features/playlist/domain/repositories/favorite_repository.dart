@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:omnistream_iptv/core/errors/failures.dart';
+import 'package:omnistream_iptv/core/error/failure.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 abstract class FavoriteRepository {

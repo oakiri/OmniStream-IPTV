@@ -12,11 +12,14 @@ class ChannelRemoteDataSourceImpl implements ChannelRemoteDataSource {
 
   @override
   Future<String> getM3UContent(String url) async {
-    final response = await client.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      return response.body;
-    } else {
+    try {
+      final response = await client.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        return response.body;
+      } else {
+        throw ServerException();
+      }
+    } catch (e) {
       throw ServerException();
     }
   }

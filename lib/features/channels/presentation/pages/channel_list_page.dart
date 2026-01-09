@@ -1,12 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_state.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:omnistream_iptv/injection_container.dart';
+// IMPORTANTE: Importamos el widget
+import 'package:omnistream_iptv/features/channels/presentation/widgets/channel_logo.dart';
 
 class ChannelListPage extends StatefulWidget {
   final String playlistUrl;
@@ -30,10 +31,12 @@ class _ChannelListPageState extends State<ChannelListPage> {
             if (state is ChannelLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is ChannelLoaded) {
-              final categories = ['All', ...state.channels.map((e) => e.group ?? 'Otros').toSet().toList()];
+              // Usamos groupTitle (ajusta a 'group' si tu entidad Channel antigua lo usa)
+              final categories = ['All', ...state.channels.map((e) => e.groupTitle ?? 'Otros').toSet().toList()];
+              
               final filteredChannels = _selectedCategory == 'All'
                   ? state.channels
-                  : state.channels.where((c) => c.group == _selectedCategory).toList();
+                  : state.channels.where((c) => (c.groupTitle ?? 'Otros') == _selectedCategory).toList();
 
               return CustomScrollView(
                 slivers: [
@@ -72,38 +75,30 @@ class _ChannelListPageState extends State<ChannelListPage> {
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final channel = filteredChannels[index];
-                        return Focus(
-                          autofocus: index == 0,
-                          child: ListTile(
-                            leading: SizedBox(
+                        return ListTile(
+                          leading: SizedBox(
+                            width: 50,
+                            height: 50,
+                            // AQUÍ ESTÁ EL CAMBIO CLAVE:
+                            child: ChannelLogo(
+                              url: channel.logoUrl,
                               width: 50,
                               height: 50,
-                              child: CachedNetworkImage(
-                                imageUrl: channel.logoUrl ?? '',
-                                memCacheHeight: 100,
-                                errorWidget: (context, url, error) => Container(
-                                  color: Colors.grey[900],
-                                  child: const Icon(Icons.tv, color: Colors.white),
-                                ),
-                                placeholder: (context, url) => Container(color: Colors.grey[900]),
-                                fit: BoxFit.contain,
-                              ),
                             ),
-                            title: Text(
-                              channel.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text(
-                              channel.group ?? 'Sin categoría',
-                              style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                            ),
-                            onTap: () {
-                              print('🚀 Navegando al player: ${channel.name}');
-                              context.push("/player", extra: {"channel": channel, "channels": filteredChannels});
-                            },
                           ),
+                          title: Text(
+                            channel.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            channel.groupTitle ?? 'Sin categoría',
+                            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          ),
+                          onTap: () {
+                            context.push("/player", extra: {"channel": channel, "channels": filteredChannels});
+                          },
                         );
                       },
                       childCount: filteredChannels.length,

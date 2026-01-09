@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,7 +16,7 @@ import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/navigation/presentation/pages/home_page.dart';
 import 'package:omnistream_iptv/features/speed_test/presentation/pages/speed_test_page.dart';
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'injection_container.dart' as di;
 import 'package:omnistream_iptv/injection_container.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -93,14 +94,18 @@ void main() async {
     debugPrint("⚠️ .env no encontrado");
   }
 
-  // Inicialización real de Firebase con opciones configuradas
+  // CORRECCIÓN: Inicialización + Login Anónimo
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint("✅ Firebase inicializado correctamente");
+    
+    // 👇 ESTA LÍNEA ES LA CLAVE PARA QUITAR EL ERROR ROJO
+    await FirebaseAuth.instance.signInAnonymously(); 
+    debugPrint("✅ Usuario Logueado ID: ${FirebaseAuth.instance.currentUser?.uid}");
+    
   } catch (e) {
-    debugPrint("❌ Error al inicializar Firebase: $e");
+    debugPrint("❌ Error crítico en Firebase: $e");
   }
 
   await Hive.initFlutter();

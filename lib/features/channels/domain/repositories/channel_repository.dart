@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
-import 'package:omnistream_iptv/core/errors/failures.dart';
-import 'package:omnistream_iptv/features/channels/domain/entities/channel.dart';
+import 'package:omnistream_iptv/core/error/failure.dart'; // <--- CORREGIDO (Singular)
+// Usamos la entidad de playlist para evitar conflictos de tipos
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart'; 
 
 abstract class ChannelRepository {
   Future<Either<Failure, List<Channel>>> getChannels(String url);

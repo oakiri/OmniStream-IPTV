@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:omnistream_iptv/core/errors/failures.dart'; // CORREGIDO: errors (plural)
+import 'package:omnistream_iptv/core/error/failure.dart'; // CORREGIDO: errors (plural)
 import 'package:omnistream_iptv/core/usecases/usecase.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
 import 'package:omnistream_iptv/features/playlist/domain/repositories/playlist_profile_repository.dart';

@@ -11,36 +11,35 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # State Management & Reactive Programming
+  # State Management
   riverpod: ^2.4.0
   flutter_riverpod: ^2.4.0
   hooks_riverpod: ^2.4.0
   
-  # Local Storage & Database
+  # Local Storage
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   
-  # HTTP & Networking
+  # Networking
   http: ^1.1.0
   dio: ^5.3.0
   connectivity_plus: ^5.0.0
   
-  # Video Player & Media
+  # Video Player
   video_player: ^2.7.0
   media_kit: ^1.2.6
   media_kit_video: ^2.0.1
-  media_kit_libs_android_video: ^1.0.6  # REQUIRED: Native libmpv.so for Android
-  # media_kit_libs_linux: ^1.2.0  # Disabled for Android build
-  # media_kit_libs_macos: ^1.2.0  # Disabled for Android build
+  media_kit_libs_android_video: ^1.0.6
   
-  # Environment Variables
+  # Environment & Firebase
   flutter_dotenv: ^5.1.0
-  
-  # Firebase
   firebase_core: ^2.24.0
   firebase_analytics: ^10.7.0
   firebase_crashlytics: ^3.5.7
   firebase_remote_config: ^4.3.0
+  firebase_auth: ^4.16.0
+  cloud_firestore: ^4.17.5
+  firebase_performance: ^0.9.4+7
   
   # UI & Navigation
   go_router: ^12.0.0
@@ -49,6 +48,9 @@ dependencies:
     sdk: flutter
   google_fonts: ^7.0.0
   cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.10
+  shimmer: ^3.0.0
+  flutter_focus_watcher: ^2.0.0
   
   # Utilities
   intl: ^0.20.2
@@ -56,25 +58,12 @@ dependencies:
   freezed_annotation: ^2.4.0
   json_annotation: ^4.9.0
   equatable: ^2.0.5
-  
-  # Logging & Debugging
   logger: ^2.0.0
-  
-  # Performance & Optimization
   get_it: ^7.6.0
   dartz: ^0.10.1
-  
-  # XML Parsing (for EPG/XMLTV)
   xml: ^6.3.0
-  
-  # String Matching (Fuzzy matching for EPG)
   string_similarity: ^2.1.0
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.17.5
-  flutter_focus_watcher: ^2.0.0
-  firebase_performance: ^0.9.4+7
   internet_connection_checker: ^1.0.0+1
-  shimmer: ^3.0.0
   media_kit_libs_video: ^1.0.7
   volume_controller: ^3.4.1
   screen_brightness: ^2.1.7
@@ -83,17 +72,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^3.0.0
-  
-  # Code Generation
   build_runner: ^2.4.0
   freezed: ^2.4.0
   json_serializable: ^6.7.0
   hive_generator: ^2.0.0
-
-  
-  # Testing
   mocktail: ^1.0.0
   integration_test:
     sdk: flutter

@@ -13,21 +13,22 @@ class PlaylistProfileRemoteDataSourceImpl implements PlaylistProfileRemoteDataSo
   PlaylistProfileRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<void> addPlaylistProfile(String userId, PlaylistProfileModel profile) {
-    return firestore
-        .collection('users_playlists')
+  Future<void> addPlaylistProfile(String userId, PlaylistProfileModel profile) async {
+    // Usamos la misma estructura que en Channels: users/{uid}/profiles
+    await firestore
+        .collection('users')
         .doc(userId)
-        .collection('playlists')
+        .collection('profiles')
         .doc(profile.id)
         .set(profile.toJson());
   }
 
   @override
-  Future<void> deletePlaylistProfile(String userId, String id) {
-    return firestore
-        .collection('users_playlists')
+  Future<void> deletePlaylistProfile(String userId, String id) async {
+    await firestore
+        .collection('users')
         .doc(userId)
-        .collection('playlists')
+        .collection('profiles')
         .doc(id)
         .delete();
   }
@@ -35,10 +36,11 @@ class PlaylistProfileRemoteDataSourceImpl implements PlaylistProfileRemoteDataSo
   @override
   Future<List<PlaylistProfileModel>> getPlaylistProfiles(String userId) async {
     final snapshot = await firestore
-        .collection('users_playlists')
+        .collection('users')
         .doc(userId)
-        .collection('playlists')
+        .collection('profiles')
         .get();
+
     return snapshot.docs
         .map((doc) => PlaylistProfileModel.fromJson(doc.data()))
         .toList();

@@ -1,71 +1,45 @@
-import 'package:dio/dio.dart';
-
-import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_parser.dart';
+import 'package:dartz/dartz.dart';
+import 'package:omnistream_iptv/core/error/failure.dart';
+import 'package:omnistream_iptv/core/utils/m3u_parser.dart';
+import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_local_data_source.dart';
 import 'package:omnistream_iptv/features/playlist/data/models/channel_model.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/playlist/domain/repositories/playlist_repository.dart';
-import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_local_data_source.dart';
-import 'package:omnistream_iptv/core/error/failure.dart';
-import 'package:dartz/dartz.dart';
+import 'package:http/http.dart' as http;
 
 class PlaylistRepositoryImpl implements PlaylistRepository {
-  final Dio dio;
-  final PlaylistParser parser;
   final PlaylistLocalDataSource localDataSource;
-  
-  // Limit to prevent app crash with massive playlists
-  static const int MAX_CHANNELS = 5000;
+  // Eliminado NetworkInfo
 
   PlaylistRepositoryImpl({
-    required this.dio,
-    required this.parser,
     required this.localDataSource,
   });
 
+  // RENOMBRADO de getPlaylist a getChannels para cumplir con la interfaz
   @override
   Future<Either<Failure, List<Channel>>> getChannels(String url) async {
     try {
-      print('[PlaylistRepository] Descargando desde: $url');
-      final response = await dio.get(url);
-      print('[PlaylistRepository] Respuesta recibida: ${response.statusCode}');
-      final content = response.data.toString();
-      print('[PlaylistRepository] Tamaño del contenido: ${content.length} bytes');
-
-      // Parser returns List<Channel> entities
-      print('[PlaylistRepository] Iniciando parsing en Isolate...');
-      var channels = await parser.parse(content);
-      print('[PlaylistRepository] Parsing completado: ${channels.length} canales');
-
-      // OPTIMIZATION: Limit to MAX_CHANNELS to prevent app crash
-      if (channels.length > MAX_CHANNELS) {
-        print('[PlaylistRepository] ⚠ Playlist tiene ${channels.length} canales. Limitando a $MAX_CHANNELS');
-        channels = channels.sublist(0, MAX_CHANNELS);
-        print('[PlaylistRepository] ✓ Limitado a $MAX_CHANNELS canales');
+      final response = await http.get(Uri.parse(url));
+      
+      if (response.statusCode == 200) {
+        final channels = M3uParser.parse(response.body);
+        
+        final channelModels = channels.map((c) => ChannelModel(
+          id: c.id,
+          name: c.name,
+          url: c.url,
+          logoUrl: c.logoUrl,
+          group: c.group,
+        )).toList();
+        
+        await localDataSource.cacheChannels(channelModels);
+        
+        return Right(channels);
+      } else {
+        return Left(ServerFailure(message: 'Error ${response.statusCode}'));
       }
-
-      // Convert Channel entities to ChannelModel for caching
-      print('[PlaylistRepository] Convirtiendo a modelos para caché...');
-      final channelModels = channels
-          .map((channel) => ChannelModel(
-                id: channel.id,
-                name: channel.name,
-                url: channel.url,
-                group: channel.group,
-                logoUrl: channel.logoUrl,
-              ))
-          .toList();
-
-      // Cache the channel models
-      print('[PlaylistRepository] Guardando en caché local ${channelModels.length} canales...');
-      await localDataSource.cacheChannels(channelModels);
-      print('[PlaylistRepository] Caché guardado exitosamente');
-
-      // Return the Channel entities
-      return Right(channels);
     } catch (e) {
-      // Handle exceptions, e.g., network errors, parsing errors
-      print('[PlaylistRepository] Error cargando canales: $e');
-      return Left(ServerFailure('Failed to load or parse playlist: $e'));
+      return Left(ServerFailure(message: 'Failed to load playlist: $e'));
     }
   }
 }

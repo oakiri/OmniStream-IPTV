@@ -82,8 +82,9 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
       id: const Uuid().v4(),
       name: name,
       url: url,
-      lastUpdated: DateTime.now(),
-      isFavorite: false,
+      type: 'm3u', // <--- ESTO ES LO QUE FALTABA
+      lastUsed: DateTime.now(),
+      // isFavorite: false,
     );
 
     // AHORA RECONOCERÁ EL EVENTO AddProfileEvent
