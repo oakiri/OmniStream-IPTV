@@ -41,23 +41,20 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text(
-          'OmniStream IPTV',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Mis Listas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: BlocProvider.value(
         value: _profileBloc,
         child: BlocBuilder<PlaylistProfileBloc, PlaylistProfileState>(
           builder: (context, state) {
-            if (state is PlaylistProfileLoading || state is PlaylistProfileInitial) {
+            if (state is PlaylistProfileLoading) {
               return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));
             } else if (state is PlaylistProfileLoaded) {
-              return _buildLoadedState(state.profiles);
+              return _buildGrid(state.profiles);
             } else if (state is PlaylistProfileError) {
               return Center(child: Text('Error: ${state.message}', style: const TextStyle(color: Colors.red)));
             }
-            return const Center(child: Text('Estado desconocido', style: TextStyle(color: Colors.white)));
+            return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.white)));
           },
         ),
       ),
@@ -69,28 +66,14 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
     );
   }
 
-  Widget _buildLoadedState(List<PlaylistProfile> profiles) {
+  Widget _buildGrid(List<PlaylistProfile> profiles) {
     if (profiles.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.playlist_add, size: 80, color: Colors.blueAccent),
-            const SizedBox(height: 16),
-            const Text('No hay listas', style: TextStyle(color: Colors.white, fontSize: 20)),
-            const Text('Pulsa + para añadir una', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      );
+      return const Center(child: Text('No hay listas', style: TextStyle(color: Colors.white)));
     }
-
     return GridView.builder(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
+        crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.75,
       ),
       itemCount: profiles.length,
       itemBuilder: (context, index) {
@@ -99,40 +82,61 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
           color: Colors.grey[900],
           elevation: 8,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          child: InkWell(
-            onTap: () => context.pushNamed('channels', extra: profile.url),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.tv, size: 64, color: Colors.blueAccent),
-                const SizedBox(height: 12),
-                Text(
-                  profile.name,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        elevation: 0,
+          child: Stack(
+            children: [
+              InkWell(
+                onTap: () => context.pushNamed('playlist_home', extra: profile.url),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.tv, size: 50, color: Colors.blueAccent),
+                    const SizedBox(height: 12),
+                    Text(profile.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
+                        onPressed: () => context.pushNamed('playlist_home', extra: profile.url),
+                        child: const Text('ENTRAR'),
                       ),
-                      onPressed: () => context.pushNamed('channels', extra: profile.url),
-                      child: const Text('ENTRAR', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              Positioned(
+                top: 5, right: 5,
+                child: IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  onPressed: () => _showDeleteConfirm(profile),
+                ),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  void _showDeleteConfirm(PlaylistProfile profile) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text('¿Borrar lista?', style: TextStyle(color: Colors.white)),
+        content: Text('¿Seguro que quieres eliminar "${profile.name}"?', style: const TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCELAR')),
+          TextButton(
+            onPressed: () {
+              // Asumimos que tu evento se llama DeleteProfileEvent como vimos antes
+              _profileBloc.add(DeleteProfileEvent(profile.id));
+              Navigator.pop(ctx);
+            }, 
+            child: const Text('BORRAR', style: TextStyle(color: Colors.redAccent))
+          ),
+        ],
+      ),
     );
   }
 }

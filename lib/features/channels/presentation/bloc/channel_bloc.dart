@@ -2,7 +2,7 @@
 import 'package:omnistream_iptv/features/channels/domain/usecases/get_channels.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_state.dart';
-import 'package:omnistream_iptv/core/error/failure.dart'; // <--- Import correcto
+import 'package:omnistream_iptv/core/error/failure.dart';
 
 class ChannelBloc extends Bloc<ChannelEvent, ChannelState> {
   final GetChannels getChannels;
@@ -10,8 +10,7 @@ class ChannelBloc extends Bloc<ChannelEvent, ChannelState> {
   ChannelBloc({required this.getChannels}) : super(ChannelInitial()) {
     on<LoadChannels>(_onLoadChannels);
     on<SearchChannels>(_onSearchChannels);
-    on<FilterChannelsByGroup>(_onFilterChannelsByGroup);
-    on<LoadMoreChannels>(_onLoadMoreChannels);
+    on<SelectCategory>(_onSelectCategory);
   }
 
   Future<void> _onLoadChannels(LoadChannels event, Emitter<ChannelState> emit) async {
@@ -19,54 +18,73 @@ class ChannelBloc extends Bloc<ChannelEvent, ChannelState> {
     final result = await getChannels(event.url);
     
     result.fold(
-      // Asumimos que Failure tiene una propiedad message, si no, usamos toString()
       (failure) => emit(ChannelError(_mapFailureToMessage(failure))),
-      (channels) => emit(ChannelLoaded(channels, hasReachedMax: false)),
+      (channels) {
+        // 1. Extraer categorías ÚNICAS de la lista
+        // Usamos un Set para que no se repitan y luego a Lista
+        final groups = channels
+            .map((c) => c.group ?? "Otros") // Si no tiene grupo, va a "Otros"
+            .toSet()
+            .toList();
+        
+        // Ordenamos alfabéticamente
+        groups.sort();
+        
+        // Añadimos "All" al principio siempre
+        final categories = ["All", ...groups];
+
+        emit(ChannelLoaded(
+          allChannels: channels,
+          displayChannels: channels, // Al principio se ven todos
+          categories: categories,
+          selectedCategory: "All",
+        ));
+      },
     );
   }
 
   void _onSearchChannels(SearchChannels event, Emitter<ChannelState> emit) {
     if (state is ChannelLoaded) {
       final currentState = state as ChannelLoaded;
-      final filtered = currentState.channels
+      
+      // Buscamos SIEMPRE en 'allChannels' (ignorando la categoría seleccionada para buscar globalmente)
+      // O si prefieres buscar solo dentro de la categoría, cambia allChannels por una lista filtrada previa.
+      // Por ahora, búsqueda global estilo Smarters:
+      final filtered = currentState.allChannels
           .where((channel) => channel.name.toLowerCase().contains(event.query.toLowerCase()))
           .toList();
-      emit(ChannelLoaded(filtered, hasReachedMax: currentState.hasReachedMax));
+          
+      emit(currentState.copyWith(
+        displayChannels: filtered,
+        selectedCategory: "All" // Al buscar, reseteamos a "All" para ver resultados de todas partes
+      ));
     }
   }
 
-  void _onFilterChannelsByGroup(FilterChannelsByGroup event, Emitter<ChannelState> emit) {
+  void _onSelectCategory(SelectCategory event, Emitter<ChannelState> emit) {
     if (state is ChannelLoaded) {
       final currentState = state as ChannelLoaded;
-      final filtered = currentState.channels
-          .where((channel) => channel.group == event.group) // Usamos .group que es el de playlist
-          .toList();
-      emit(ChannelLoaded(filtered, hasReachedMax: currentState.hasReachedMax));
-    }
-  }
+      
+      List<dynamic> filtered; // Usamos dynamic temporalmente para evitar problemas de tipo, luego casteamos implícitamente
 
-  Future<void> _onLoadMoreChannels(LoadMoreChannels event, Emitter<ChannelState> emit) async {
-    if (state is ChannelLoaded) {
-      final currentState = state as ChannelLoaded;
-      final result = await getChannels(event.playlistId); // Aqu� deber�as implementar paginaci�n real
+      if (event.category == "All") {
+        // Si es "All", mostramos todo
+        filtered = currentState.allChannels;
+      } else {
+        // Filtramos por el grupo exacto
+        filtered = currentState.allChannels
+            .where((channel) => (channel.group ?? "Otros") == event.category)
+            .toList();
+      }
 
-      result.fold(
-        (failure) => emit(ChannelError(_mapFailureToMessage(failure))),
-        (newChannels) {
-          emit(newChannels.isEmpty
-              ? currentState.copyWith(hasReachedMax: true)
-              : ChannelLoaded(
-                  currentState.channels + newChannels,
-                  hasReachedMax: false,
-                ));
-        },
-      );
+      emit(currentState.copyWith(
+        displayChannels: List.from(filtered),
+        selectedCategory: event.category,
+      ));
     }
   }
 
   String _mapFailureToMessage(Failure failure) {
-    // Si tu clase Failure tiene una propiedad 'message', �sala: return failure.message;
-    // Si no, devuelve un mensaje gen�rico o el toString:
     return "Error al cargar canales: ${failure.toString()}";
   }
 }

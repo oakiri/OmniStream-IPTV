@@ -1,15 +1,18 @@
 import 'package:dartz/dartz.dart';
-import 'package:omnistream_iptv/core/error/failure.dart';
-import 'package:omnistream_iptv/core/utils/m3u_parser.dart';
-import 'package:omnistream_iptv/features/channels/data/datasources/channel_remote_data_source.dart';
-import 'package:omnistream_iptv/features/channels/data/datasources/firebase_channel_data_source.dart';
-import 'package:omnistream_iptv/features/channels/domain/repositories/channel_repository.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
-import 'package:omnistream_iptv/features/playlist/data/models/channel_model.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../domain/entities/channel.dart'; // O channel_old.dart según uses, pero debe ser consistente
+import '../../domain/repositories/channel_repository.dart';
+import '../datasources/channel_remote_data_source.dart';
+import '../datasources/firebase_channel_data_source.dart';
+import '../../../playlist/data/models/channel_model.dart';
+// Asegúrate de importar tu M3uParser si lo usas aquí dentro para parsear el string del remoteDataSource
+import '../../../../core/utils/m3u_parser.dart'; 
 
 class ChannelRepositoryImpl implements ChannelRepository {
   final ChannelRemoteDataSource remoteDataSource;
   final FirebaseChannelDataSource firebaseDataSource;
+  final M3uParser m3uParser = M3uParser(); // Lo instanciamos aquí o lo inyectamos si prefieres
 
   ChannelRepositoryImpl({
     required this.remoteDataSource,
@@ -17,29 +20,22 @@ class ChannelRepositoryImpl implements ChannelRepository {
   });
 
   @override
-  Future<Either<Failure, List<Channel>>> getChannels(String url) async {
+  Future<Either<Failure, List<Channel>>> getChannels(String playlistUrl) async {
     try {
-      final m3uContent = await remoteDataSource.getM3UContent(url);
-      final channels = M3uParser.parse(m3uContent);
+      // 1. Intentar obtener de la red
+      final String m3uContent = await remoteDataSource.getM3UContent(playlistUrl);
+      
+      // 2. Parsear
+      final List<Channel> channels = await m3uParser.parse(m3uContent);
+      
+      // 3. (Opcional) Sincronizar con Firebase si es necesario
+      // Aquí podrías convertir a Model y guardar, pero por ahora devolvemos la lista
+      
       return Right(channels);
+    } on ServerException {
+      return const Left(ServerFailure(message: 'Error al conectar con el servidor'));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
-  }
-
-  @override
-  Future<Either<Failure, void>> syncWithFirestore(String playlistId, List<Channel> channels, {Function(int, int)? onProgress}) async {
-    try {
-      final models = channels.map((c) => ChannelModel.fromEntity(c)).toList();
-      await firebaseDataSource.syncChannels(playlistId, models);
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<Channel>>> getChannelsPaginated(String playlistId, {int limit = 50}) async {
-    return const Right([]);
   }
 }

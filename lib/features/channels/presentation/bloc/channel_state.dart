@@ -1,56 +1,55 @@
 ﻿import 'package:equatable/equatable.dart';
-// Aseguramos que importa la entidad correcta
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 abstract class ChannelState extends Equatable {
   const ChannelState();
-
+  
   @override
-  List<Object?> get props => [];
+  List<Object> get props => [];
 }
 
 class ChannelInitial extends ChannelState {}
 
 class ChannelLoading extends ChannelState {}
 
-class ChannelSyncing extends ChannelState {
-  final int current;
-  final int total;
-  final double progress;
-
-  const ChannelSyncing({required this.current, required this.total}) 
-      : progress = total > 0 ? current / total : 0;
-
-  @override
-  List<Object?> get props => [current, total, progress];
-}
-
 class ChannelLoaded extends ChannelState {
-  final List<Channel> channels;
-  final bool hasReachedMax;
+  final List<Channel> allChannels;      // Todos los canales
+  final List<Channel> displayChannels;  // Los que se ven ahora
+  
+  // NUEVAS VARIABLES PARA CATEGORÍAS
+  final List<String> categories;        // Lista de grupos: ["All", "Deportes", ...]
+  final String selectedCategory;        // Grupo activo: "Deportes"
 
-  const ChannelLoaded(this.channels, {this.hasReachedMax = false});
+  const ChannelLoaded({
+    required this.allChannels,
+    required this.displayChannels,
+    required this.categories,
+    required this.selectedCategory,
+  });
 
-  // --- M�TODO A�ADIDO ---
+  List<Channel> get channels => displayChannels;
+
   ChannelLoaded copyWith({
-    List<Channel>? channels,
-    bool? hasReachedMax,
+    List<Channel>? allChannels,
+    List<Channel>? displayChannels,
+    List<String>? categories,
+    String? selectedCategory,
   }) {
     return ChannelLoaded(
-      channels ?? this.channels,
-      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      allChannels: allChannels ?? this.allChannels,
+      displayChannels: displayChannels ?? this.displayChannels,
+      categories: categories ?? this.categories,
+      selectedCategory: selectedCategory ?? this.selectedCategory,
     );
   }
 
   @override
-  List<Object?> get props => [channels, hasReachedMax];
+  List<Object> get props => [allChannels, displayChannels, categories, selectedCategory];
 }
 
 class ChannelError extends ChannelState {
   final String message;
-
   const ChannelError(this.message);
-
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [message];
 }

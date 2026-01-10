@@ -4,7 +4,7 @@ abstract class ChannelEvent extends Equatable {
   const ChannelEvent();
 
   @override
-  List<Object?> get props => [];
+  List<Object> get props => [];
 }
 
 class LoadChannels extends ChannelEvent {
@@ -14,42 +14,23 @@ class LoadChannels extends ChannelEvent {
   const LoadChannels({required this.url, required this.playlistId});
 
   @override
-  List<Object?> get props => [url, playlistId];
+  List<Object> get props => [url, playlistId];
 }
-
-class SyncChannelsWithFirestore extends ChannelEvent {
-  final String playlistId;
-  final String url;
-
-  const SyncChannelsWithFirestore({required this.playlistId, required this.url});
-
-  @override
-  List<Object?> get props => [playlistId, url];
-}
-
-class LoadMoreChannels extends ChannelEvent {
-  final String playlistId;
-
-  const LoadMoreChannels(this.playlistId);
-
-  @override
-  List<Object?> get props => [playlistId];
-}
-
-// --- CLASES A�ADIDAS ---
 
 class SearchChannels extends ChannelEvent {
   final String query;
   const SearchChannels(this.query);
 
   @override
-  List<Object?> get props => [query];
+  List<Object> get props => [query];
 }
 
-class FilterChannelsByGroup extends ChannelEvent {
-  final String group;
-  const FilterChannelsByGroup(this.group);
+// NUEVO EVENTO: Seleccionar Categoría
+class SelectCategory extends ChannelEvent {
+  final String category; // Ej: "Deportes", "Cine", "All"
+
+  const SelectCategory(this.category);
 
   @override
-  List<Object?> get props => [group];
+  List<Object> get props => [category];
 }

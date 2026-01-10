@@ -8,6 +8,7 @@ abstract class ChannelRemoteDataSource {
 class ChannelRemoteDataSourceImpl implements ChannelRemoteDataSource {
   final http.Client client;
 
+  // Constructor simple, SIN m3uParser
   ChannelRemoteDataSourceImpl({required this.client});
 
   @override

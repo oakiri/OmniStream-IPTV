@@ -1,41 +1,72 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static final darkTheme = ThemeData(
+  // Colores estilo "Smarters"
+  static const Color primaryColor = Color(0xFF0D47A1); // Azul fuerte
+  static const Color accentColor = Color(0xFF42A5F5);  // Azul claro selección
+  static const Color backgroundColor = Color(0xFF0F1218); // Negro casi puro
+  static const Color surfaceColor = Color(0xFF1E2430); // Gris azulado para tarjetas
+  static const Color errorColor = Color(0xFFCF6679);
+
+  static final ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
     brightness: Brightness.dark,
-    primaryColor: const Color(0xFF0A0E21),
-    scaffoldBackgroundColor: const Color(0xFF0A0E21),
-    colorScheme: const ColorScheme.dark(
-      primary: Color(0xFF0A0E21),
-      secondary: Color(0xFF00E5FF),
-      surface: Color.fromRGBO(10, 14, 33, 0.8),
+    primaryColor: primaryColor,
+    scaffoldBackgroundColor: backgroundColor,
+    
+    // Configuración de Textos (Todo blanco por defecto)
+    textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme).apply(
+      bodyColor: Colors.white,
+      displayColor: Colors.white,
     ),
+
+    // COMENTADO TEMPORALMENTE PARA EVITAR ERROR DE VERSIÓN
+    // cardTheme: CardTheme(
+    //   color: surfaceColor,
+    //   elevation: 4,
+    //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    // ),
+
+    // Configuración de Inputs (Buscador y Formularios)
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: surfaceColor,
+      hintStyle: const TextStyle(color: Colors.grey),
+      labelStyle: const TextStyle(color: Colors.white70),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: accentColor, width: 2),
+      ),
+    ),
+
+    // Configuración de la AppBar
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF0A0E21),
+      backgroundColor: backgroundColor,
       elevation: 0,
-    ),
-    cardTheme: CardThemeData(
-      color: const Color.fromRGBO(10, 14, 33, 0.8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: const Color(0xFF00E5FF).withOpacity(0.2), width: 0.5),
+      centerTitle: true,
+      iconTheme: IconThemeData(color: Colors.white),
+      titleTextStyle: TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
       ),
     ),
-    chipTheme: ChipThemeData(
-      backgroundColor: const Color.fromRGBO(10, 14, 33, 0.8),
-      selectedColor: const Color(0xFF00E5FF),
-      labelStyle: const TextStyle(color: Colors.white),
-      secondaryLabelStyle: const TextStyle(color: Colors.black),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: const Color(0xFF00E5FF).withOpacity(0.2), width: 0.5),
-      ),
-    ),
-    textTheme: const TextTheme(
-      headlineLarge: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-      titleLarge: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-      bodyLarge: TextStyle(color: Colors.white),
-      bodyMedium: TextStyle(color: Colors.white70),
-    ),
+    
+    // COMENTADO TEMPORALMENTE PARA EVITAR ERROR DE VERSIÓN
+    // dialogTheme: const DialogTheme(
+    //   backgroundColor: surfaceColor,
+    //   titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+    //   contentTextStyle: TextStyle(color: Colors.white70, fontSize: 16),
+    // ),
   );
 }

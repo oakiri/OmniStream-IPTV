@@ -17,7 +17,6 @@ class PlaylistProfileModel extends PlaylistProfile {
   @HiveField(3)
   final String userId;
 
-  // Nuevos campos para la base de datos
   @HiveField(4)
   final String? type;
 
@@ -49,5 +48,16 @@ class PlaylistProfileModel extends PlaylistProfile {
       type: profile.type,
       lastUsed: profile.lastUsed,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'url': url,
+      'userId': userId,
+      'type': type,
+      'lastUsed': lastUsed?.toIso8601String(),
+    };
   }
 }
