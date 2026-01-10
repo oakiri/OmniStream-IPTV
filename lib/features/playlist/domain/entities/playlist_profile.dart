@@ -1,19 +1,23 @@
-import 'package:equatable/equatable.dart';
+Ôªøimport 'package:equatable/equatable.dart';
 
 class PlaylistProfile extends Equatable {
   final String id;
   final String name;
   final String url;
-  // AÒadimos este campo que faltaba para coincidir con el modelo
-  final String? userId; 
+  final String? userId;
+  // A√±adimos los campos que faltaban y que AddPlaylistDialog est√° pidiendo
+  final String? type; 
+  final DateTime? lastUsed;
 
   const PlaylistProfile({
     required this.id,
     required this.name,
     required this.url,
-    this.userId, // AÒadido al constructor
+    this.userId,
+    this.type,
+    this.lastUsed,
   });
 
   @override
-  List<Object?> get props => [id, name, url, userId];
+  List<Object?> get props => [id, name, url, userId, type, lastUsed];
 }

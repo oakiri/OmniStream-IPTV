@@ -17,12 +17,28 @@ class PlaylistProfileModel extends PlaylistProfile {
   @HiveField(3)
   final String userId;
 
+  // Nuevos campos para la base de datos
+  @HiveField(4)
+  final String? type;
+
+  @HiveField(5)
+  final DateTime? lastUsed;
+
   const PlaylistProfileModel({
     required this.id,
     required this.name,
     required this.url,
     required this.userId,
-  }) : super(id: id, name: name, url: url, userId: userId);
+    this.type,
+    this.lastUsed,
+  }) : super(
+          id: id, 
+          name: name, 
+          url: url, 
+          userId: userId,
+          type: type,
+          lastUsed: lastUsed,
+        );
 
   factory PlaylistProfileModel.fromEntity(PlaylistProfile profile) {
     return PlaylistProfileModel(
@@ -30,6 +46,8 @@ class PlaylistProfileModel extends PlaylistProfile {
       name: profile.name,
       url: profile.url,
       userId: profile.userId ?? 'local',
+      type: profile.type,
+      lastUsed: profile.lastUsed,
     );
   }
 }

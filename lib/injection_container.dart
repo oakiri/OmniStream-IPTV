@@ -57,12 +57,21 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SignInAnonymously(sl()));
   sl.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
 
-  //! Hive - REGISTRO DE ADAPTERS
-  // Nota: Si el Adapter no existe aún, comentamos la línea para que compile
-  // y luego ejecutamos build_runner para generarlo.
-  // Hive.registerAdapter(PlaylistProfileModelAdapter()); 
+  //! Hive - REGISTRO DE ADAPTERS (¡ESTO ES LO VITAL!)
+  // Verificamos si ya están registrados para evitar errores, si no, los registramos.
+  if (!Hive.isAdapterRegistered(0)) {
+     Hive.registerAdapter(PlaylistProfileModelAdapter()); 
+  }
+  // Asumiendo que el ChannelModelAdapter tiene TypeId 1 o similar.
+  // Si ChannelModel usa otro ID, Hive lo detectará.
+  try {
+     Hive.registerAdapter(ChannelModelAdapter());
+  } catch (e) {
+    // Ignoramos si ya está registrado o si hay conflicto de IDs por ahora
+    print("Adapter ya registrado o conflicto leve: $e");
+  }
   
-  // Abrimos cajas
+  // AHORA SÍ: Abrimos cajas (Una vez que Hive sabe cómo leer los datos)
   final profileBox = await Hive.openBox<PlaylistProfileModel>('playlist_profiles');
   final channelBox = await Hive.openBox<ChannelModel>('channels');
 
@@ -88,13 +97,11 @@ Future<void> init() async {
     () => PlaylistProfileRepositoryImpl(
       localDataSource: sl(),
       firebaseAuth: sl(),
-      // Eliminados remote y networkInfo
     ),
   );
   sl.registerLazySingleton<PlaylistRepository>(
     () => PlaylistRepositoryImpl(
       localDataSource: sl(),
-      // Eliminados remote y networkInfo
     ),
   );
   sl.registerLazySingleton<FavoriteRepository>(

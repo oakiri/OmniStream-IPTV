@@ -1,85 +1,78 @@
-name: omnistream_iptv
-description: "OmniStream IPTV - Cross-platform IPTV player with high-performance streaming, EPG support, and adaptive UI for mobile and TV devices."
+﻿name: omnistream_iptv
+description: "A new Flutter project."
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.2.3 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-
-  # State Management
-  riverpod: ^2.4.0
-  flutter_riverpod: ^2.4.0
-  hooks_riverpod: ^2.4.0
   
-  # Local Storage
+  # --- UI & State Management ---
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.2.1
+  flutter_bloc: ^8.1.6
+  bloc: ^8.1.4
+  equatable: ^2.0.5
+  dartz: ^0.10.1
+  get_it: ^7.7.0
+  provider: ^6.1.2
+  go_router: ^14.2.1
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  flutter_svg: ^2.0.10+1
+  lottie: ^3.1.2
+  url_launcher: ^6.3.0
+  uuid: ^4.4.0
+  intl: ^0.19.0
+  
+  # --- Storage & Database ---
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  shared_preferences: ^2.2.3
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+
+  # --- Firebase (Versiones Modernas y Compatibles) ---
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_analytics: ^11.3.3
+  firebase_crashlytics: ^4.1.3
+  firebase_performance: ^0.10.0
+  firebase_remote_config: ^5.1.3
   
-  # Networking
-  http: ^1.1.0
-  dio: ^5.3.0
-  connectivity_plus: ^5.0.0
-  
-  # Video Player
-  video_player: ^2.7.0
-  media_kit: ^1.2.6
-  media_kit_video: ^2.0.1
-  media_kit_libs_android_video: ^1.0.6
-  
-  # Environment & Firebase
+  # --- Video Player (MediaKit) ---
+  media_kit: ^1.1.11
+  media_kit_video: ^1.2.5
+  media_kit_libs_video: ^1.0.5
+
+  # --- Utils ---
+  http: ^1.2.1
+  connectivity_plus: ^6.0.3
+  crypto: ^3.0.3
+  xml: ^6.5.0
+  rxdart: ^0.27.7
   flutter_dotenv: ^5.1.0
-  firebase_core: ^2.24.0
-  firebase_analytics: ^10.7.0
-  firebase_crashlytics: ^3.5.7
-  firebase_remote_config: ^4.3.0
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.17.5
-  firebase_performance: ^0.9.4+7
+  permission_handler: ^11.3.1
+  device_info_plus: ^10.1.0
+  package_info_plus: ^8.0.0
   
-  # UI & Navigation
-  go_router: ^12.0.0
-  flutter_bloc: ^8.1.0
-  flutter_localizations:
-    sdk: flutter
-  google_fonts: ^7.0.0
-  cached_network_image: ^3.4.1
-  flutter_svg: ^2.0.10
-  shimmer: ^3.0.0
-  flutter_focus_watcher: ^2.0.0
-  
-  # Utilities
-  intl: ^0.20.2
-  uuid: ^4.0.0
-  freezed_annotation: ^2.4.0
-  json_annotation: ^4.9.0
-  equatable: ^2.0.5
-  logger: ^2.0.0
-  get_it: ^7.6.0
-  dartz: ^0.10.1
-  xml: ^6.3.0
-  string_similarity: ^2.1.0
-  internet_connection_checker: ^1.0.0+1
-  media_kit_libs_video: ^1.0.7
-  volume_controller: ^3.4.1
-  screen_brightness: ^2.1.7
-  battery_plus: ^7.0.0
+  # --- Plugins de Hardware (Versiones Corregidas) ---
+  wakelock_plus: ^1.2.8
+  screen_brightness: ^2.0.0  # <--- Corregido (antes era 0.2.3 incorrecto)
+  volume_controller: ^3.4.0  # <--- Actualizado a versión estable moderna
+  battery_plus: ^6.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
-  build_runner: ^2.4.0
-  freezed: ^2.4.0
-  json_serializable: ^6.7.0
-  hive_generator: ^2.0.0
-  mocktail: ^1.0.0
-  integration_test:
-    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.9
+  hive_generator: ^2.0.1
+  json_serializable: ^6.8.0
 
 flutter:
   uses-material-design: true

@@ -6,8 +6,8 @@ plugins {
 
 android {
     namespace = "com.example.omnistream_iptv"
-    compileSdk = 36
-    ndkVersion = "28.2.13676358"
+    compileSdk = 36 // Necesario para los plugins nuevos
+    ndkVersion = "28.2.13676358" // O la versión que tengas instalada
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -24,9 +24,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        // 👇 AÑADE ESTO OBLIGATORIAMENTE
+        
         multiDexEnabled = true
-        // CRITICAL: Configure NDK for native libraries (MediaKit libmpv.so)
+        
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86_64"))
         }
@@ -36,6 +36,14 @@ android {
 
     buildTypes {
         release {
+            // MANTENER EN FALSE PARA EVITAR EL ERROR DE FIREBASE
+            isMinifyEnabled = false 
+            isShrinkResources = false
+            
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -46,7 +54,27 @@ flutter {
 }
 
 dependencies {
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test:runner:1.5.2")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    // --- ESTO ES LO QUE ARREGLA EL ERROR DE AGP 8.9.1 ---
+    // Forzamos versiones estables que funcionan con tu compilador actual
+    constraints {
+        implementation("androidx.browser:browser:1.8.0") {
+            because("1.9.0 requiere una versión de Gradle demasiado nueva")
+        }
+        implementation("androidx.core:core-ktx:1.13.1") {
+            because("1.17.0 requiere una versión de Gradle demasiado nueva")
+        }
+        implementation("androidx.core:core:1.13.1") {
+            because("1.17.0 requiere una versión de Gradle demasiado nueva")
+        }
+    }
+}
+// --- PEGA ESTO AL FINAL DEL ARCHIVO android/app/build.gradle.kts ---
+
+configurations.all {
+    resolutionStrategy {
+        // Obligamos a usar versiones ESTABLES antiguas, ignorando las nuevas betas
+        force("androidx.browser:browser:1.8.0")
+        force("androidx.core:core-ktx:1.13.1")
+        force("androidx.core:core:1.13.1")
+    }
 }

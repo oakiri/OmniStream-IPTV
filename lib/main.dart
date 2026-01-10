@@ -46,7 +46,7 @@ final _router = GoRouter(
         return QuadViewPage(channels: channels ?? []);
       },
     ),
-    GoRoute(
+	GoRoute(
       path: '/channels',
       name: 'channels',
       builder: (context, state) {
@@ -59,7 +59,11 @@ final _router = GoRouter(
           );
         }
         return BlocProvider(
-          create: (context) => sl<ChannelBloc>()..add(SyncChannelsWithFirestore(playlistId: playlistUrl, url: playlistUrl)),
+          create: (context) => sl<ChannelBloc>()
+            ..add(LoadChannels(
+              url: playlistUrl, 
+              playlistId: playlistUrl, // <--- ¡ESTO ES LO QUE FALTABA!
+            )), 
           child: ChannelGridPage(playlistUrl: playlistUrl),
         );
       },
