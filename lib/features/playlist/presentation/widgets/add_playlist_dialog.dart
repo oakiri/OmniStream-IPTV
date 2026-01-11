@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Necesario para el Portapapeles
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
@@ -42,14 +43,17 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
     if (_formKey.currentState!.validate()) {
       String finalUrl = '';
       if (_tabController.index == 0) {
+        // MODO M3U
         finalUrl = _m3uUrlController.text.trim();
       } else {
+        // MODO XTREAM CODES
         String server = _serverController.text.trim();
         if (!server.startsWith('http://') && !server.startsWith('https://')) {
           server = 'http://$server';
         }
         final user = _userController.text.trim();
         final pass = _passwordController.text.trim();
+        
         finalUrl = '$server/get.php?username=$user&password=$pass&type=m3u_plus&output=ts';
       }
 
@@ -64,28 +68,36 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
     }
   }
 
+  // Función para pegar desde el portapapeles
+  Future<void> _pasteFromClipboard(TextEditingController controller) async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data?.text != null) {
+      setState(() {
+        controller.text = data!.text!;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Usamos Dialog con background transparente para que el Scaffold de abajo tenga control
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        // ESTO ES LA CLAVE: El Scaffold empuja el contenido hacia arriba cuando sale el teclado
-        resizeToAvoidBottomInset: true, 
+        resizeToAvoidBottomInset: true,
         body: Center(
           child: SingleChildScrollView(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
+              constraints: const BoxConstraints(maxWidth: 450),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E), // Fondo Gris Oscuro Premium
+                color: const Color(0xFF1E1E1E),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white12), // Borde sutil
+                border: Border.all(color: Colors.white12),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.5),
-                    blurRadius: 20,
+                    blurRadius: 25,
                     offset: const Offset(0, 10),
                   ),
                 ],
@@ -93,7 +105,7 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // CABECERA
+                  // --- CABECERA ---
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     width: double.infinity,
@@ -104,18 +116,22 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
                     child: const Text(
                       'Añadir Nueva Lista',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold),
                     ),
                   ),
 
-                  // FORMULARIO
+                  // --- FORMULARIO ---
                   Padding(
                     padding: const EdgeInsets.all(24),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         children: [
-                          _buildTextField(_nameController, 'Nombre de la lista', Icons.label),
+                          _buildTextField(
+                            controller: _nameController, 
+                            label: 'Nombre de la lista', 
+                            icon: Icons.label
+                          ),
                           const SizedBox(height: 20),
 
                           // TABS
@@ -128,41 +144,63 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
                             child: TabBar(
                               controller: _tabController,
                               indicator: BoxDecoration(
-                                color: Colors.blueAccent,
+                                color: Colors.white.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white24),
                               ),
                               labelColor: Colors.white,
                               unselectedLabelColor: Colors.grey,
+                              indicatorSize: TabBarIndicatorSize.tab,
+                              dividerColor: Colors.transparent,
                               tabs: const [
                                 Tab(text: "M3U"),
                                 Tab(text: "Xtream Codes"),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 25),
 
-                          // CONTENIDO TABS
+                          // CONTENIDO CAMBIANTE
+                          // CORREGIDO: Aumentamos la altura a 320 para que no corte los textos
                           SizedBox(
-                            height: 200, // Altura fija para evitar saltos bruscos
+                            height: 320, 
                             child: TabBarView(
                               controller: _tabController,
                               children: [
                                 // TAB 1: M3U
-                                Center(
-                                  child: _buildTextField(_m3uUrlController, 'URL (.m3u)', Icons.link, maxLines: 3),
+                                Align(
+                                  alignment: Alignment.topCenter,
+                                  child: _buildTextField(
+                                    controller: _m3uUrlController, 
+                                    label: 'URL de la lista (.m3u)', 
+                                    icon: Icons.link, 
+                                    maxLines: 4,
+                                    allowPaste: true // Botón pegar activado
+                                  ),
                                 ),
-                                // TAB 2: Xtream
+                                
+                                // TAB 2: XTREAM CODES
                                 Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    _buildTextField(_serverController, 'Servidor (http://...)', Icons.dns),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(child: _buildTextField(_userController, 'Usuario', Icons.person)),
-                                        const SizedBox(width: 12),
-                                        Expanded(child: _buildTextField(_passwordController, 'Password', Icons.lock, isPassword: true)),
-                                      ],
+                                    _buildTextField(
+                                      controller: _serverController, 
+                                      label: 'Servidor (http://...)', 
+                                      icon: Icons.dns,
+                                      allowPaste: true // Botón pegar activado
+                                    ),
+                                    const SizedBox(height: 15),
+                                    _buildTextField(
+                                      controller: _userController, 
+                                      label: 'Usuario', 
+                                      icon: Icons.person
+                                    ),
+                                    const SizedBox(height: 15),
+                                    _buildTextField(
+                                      controller: _passwordController, 
+                                      label: 'Contraseña', 
+                                      icon: Icons.lock, 
+                                      isPassword: true
                                     ),
                                   ],
                                 ),
@@ -172,7 +210,7 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
 
                           const SizedBox(height: 10),
                           
-                          // BOTONES ACCIÓN
+                          // --- BOTONES ---
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -180,16 +218,17 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
                                 onPressed: () => Navigator.pop(context),
                                 child: const Text('CANCELAR', style: TextStyle(color: Colors.grey)),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 15),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blueAccent,
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 ),
                                 onPressed: _submit,
-                                child: const Text('GUARDAR LISTA', style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -206,29 +245,46 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog> with SingleTicker
     );
   }
 
-  Widget _buildTextField(
-    TextEditingController controller, 
-    String label, 
-    IconData icon, 
-    {bool isPassword = false, int maxLines = 1}
-  ) {
+  Widget _buildTextField({
+    required TextEditingController controller, 
+    required String label, 
+    required IconData icon, 
+    bool isPassword = false, 
+    int maxLines = 1,
+    bool allowPaste = false, // Parámetro para activar el botón de pegar
+  }) {
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.5), // height: 1.5 evita cortes verticales
       obscureText: isPassword,
       maxLines: maxLines,
+      keyboardType: maxLines > 1 ? TextInputType.multiline : TextInputType.text,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white54),
         prefixIcon: Icon(icon, color: Colors.white30, size: 20),
+        
+        // Lógica del botón PEGAR
+        suffixIcon: allowPaste 
+          ? IconButton(
+              icon: const Icon(Icons.content_paste, color: Colors.blueAccent, size: 20),
+              onPressed: () => _pasteFromClipboard(controller),
+              tooltip: 'Pegar',
+            )
+          : null,
+
         filled: true,
         fillColor: Colors.white.withOpacity(0.05),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.blueAccent)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12), 
+          borderSide: const BorderSide(color: Colors.white54, width: 1),
+        ),
+        // Aumentamos el padding vertical para evitar cortes
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       ),
       validator: (v) {
-        // Validación simple: solo validamos si la pestaña actual corresponde al campo
         bool isM3uTab = _tabController.index == 0;
         if (label.contains('Nombre') && (v == null || v.isEmpty)) return 'Requerido';
         if (isM3uTab && label.contains('URL') && (v == null || v.isEmpty)) return 'Requerido';
