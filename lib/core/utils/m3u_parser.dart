@@ -2,6 +2,7 @@
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 class M3uParser {
+  // Método ESTÁTICO (static)
   static List<Channel> parse(String content) {
     final List<Channel> channels = [];
     final lines = content.split('\n');
@@ -15,7 +16,7 @@ class M3uParser {
       String line = lines[i].trim();
 
       if (line.startsWith('#EXTINF:')) {
-        // Parsear metadatos
+        // Parsear metadatos básicos
         final attributes = line.substring(8);
         final parts = attributes.split(',');
         
@@ -23,33 +24,22 @@ class M3uParser {
           name = parts.last.trim();
         }
 
-        // Extracci�n b�sica de atributos (se puede mejorar con Regex)
-        if (line.contains('tvg-logo="')) {
-          logoUrl = _extractAttribute(line, 'tvg-logo');
-        }
-        if (line.contains('group-title="')) {
-          group = _extractAttribute(line, 'group-title');
-        }
-        if (line.contains('tvg-id="')) {
-          tvgId = _extractAttribute(line, 'tvg-id');
-        }
-        if (line.contains('tvg-name="')) {
-          tvgName = _extractAttribute(line, 'tvg-name');
-        }
+        if (line.contains('tvg-logo="')) logoUrl = _extractAttribute(line, 'tvg-logo');
+        if (line.contains('group-title="')) group = _extractAttribute(line, 'group-title');
+        if (line.contains('tvg-id="')) tvgId = _extractAttribute(line, 'tvg-id');
+        if (line.contains('tvg-name="')) tvgName = _extractAttribute(line, 'tvg-name');
 
       } else if (line.isNotEmpty && !line.startsWith('#')) {
-        // Es la URL
         if (name != null) {
           channels.add(Channel(
             id: const Uuid().v4(),
             name: name,
-            url: line, // <--- CORREGIDO: Antes pon�a streamUrl
+            url: line,
             logoUrl: logoUrl,
             group: group,
             tvgId: tvgId,
             tvgName: tvgName,
           ));
-          // Reiniciar variables
           name = null;
           logoUrl = null;
           group = null;

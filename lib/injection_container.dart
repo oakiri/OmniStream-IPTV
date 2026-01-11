@@ -5,7 +5,7 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:omnistream_iptv/core/utils/m3u_parser.dart';
 
-// Features - Playlist Profiles (Gestión de Listas y Borrado)
+// Features - Playlist Profiles
 import 'features/playlist/data/datasources/playlist_profile_local_data_source.dart';
 import 'features/playlist/data/models/playlist_profile_model.dart';
 import 'features/playlist/data/repositories/playlist_profile_repository_impl.dart';
@@ -15,9 +15,9 @@ import 'features/playlist/domain/usecases/get_playlist_profiles.dart';
 import 'features/playlist/domain/usecases/delete_playlist_profile.dart';
 import 'features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 
-// Features - Channels (Canales y Reproducción)
+// Features - Channels
 import 'features/channels/data/datasources/channel_remote_data_source.dart';
-import 'features/channels/data/datasources/firebase_channel_data_source.dart'; // Importante
+import 'features/channels/data/datasources/firebase_channel_data_source.dart';
 import 'features/channels/data/repositories/channel_repository_impl.dart';
 import 'features/channels/domain/repositories/channel_repository.dart';
 import 'features/channels/domain/usecases/get_channels.dart';
@@ -51,6 +51,7 @@ Future<void> init() async {
   );
 
   // Data sources
+  // Usamos la implementación específica para perfiles
   sl.registerLazySingleton<PlaylistProfileLocalDataSource>(
     () => PlaylistProfileLocalDataSourceImpl(box: sl()),
   );
@@ -63,21 +64,18 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetChannels(sl()));
 
   // Repository
-  // CORRECCIÓN DEL LOG: Ahora inyectamos también el firebaseDataSource
   sl.registerLazySingleton<ChannelRepository>(
     () => ChannelRepositoryImpl(
       remoteDataSource: sl(),
-      firebaseDataSource: sl(), 
+      firebaseDataSource: sl(), // CORRECCIÓN CRÍTICA: Se añade firebaseDataSource
     ),
   );
 
   // Data sources
-  // CORRECCIÓN DEL LOG: Quitamos m3uParser porque el constructor ya no lo pide
   sl.registerLazySingleton<ChannelRemoteDataSource>(
-    () => ChannelRemoteDataSourceImpl(client: sl()),
+    () => ChannelRemoteDataSourceImpl(client: sl()), // CORRECCIÓN CRÍTICA: Se elimina m3uParser
   );
 
-  // Nuevo DataSource de Firebase para Canales
   sl.registerLazySingleton<FirebaseChannelDataSource>(
     () => FirebaseChannelDataSourceImpl(
       firestore: sl(),

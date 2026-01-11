@@ -5,7 +5,7 @@ import 'package:omnistream_iptv/core/errors/exceptions.dart';
 
 abstract class FirebaseChannelDataSource {
   Future<void> syncChannels(String playlistId, List<ChannelModel> channels);
-  Future<List<ChannelModel>> getChannels(String playlistId); // AÑADIDO
+  Future<List<ChannelModel>> getChannels(String playlistId);
 }
 
 class FirebaseChannelDataSourceImpl implements FirebaseChannelDataSource {
@@ -27,22 +27,32 @@ class FirebaseChannelDataSourceImpl implements FirebaseChannelDataSource {
         .doc(playlistId)
         .collection('channels');
 
-    for (var channel in channels) {
+    // Limitamos a 450 para no pasarnos del límite de batch de Firestore (500)
+    for (var channel in channels.take(450)) {
       final docRef = collection.doc(channel.id);
-      batch.set(docRef, {
-        'id': channel.id,
-        'name': channel.name,
-        'logoUrl': channel.logoUrl,
-        'url': channel.url,
-        'group': channel.group,
-      });
+      // AHORA SÍ funcionará porque hemos añadido el método toJson() al modelo
+      batch.set(docRef, channel.toJson());
     }
     await batch.commit();
   }
 
   @override
   Future<List<ChannelModel>> getChannels(String playlistId) async {
-     // Implementación básica para que compile
-     return [];
+    final user = auth.currentUser;
+    if (user == null) throw ServerException();
+
+    final snapshot = await firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('playlists')
+        .doc(playlistId)
+        .collection('channels')
+        .limit(50)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      // AHORA SÍ funcionará porque hemos añadido el método fromJson() al modelo
+      return ChannelModel.fromJson(doc.data());
+    }).toList();
   }
 }

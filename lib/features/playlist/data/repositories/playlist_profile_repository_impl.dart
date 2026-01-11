@@ -2,13 +2,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:omnistream_iptv/core/error/failure.dart';
-import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_profile_local_data_source.dart'; // Import correcto
+import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_profile_local_data_source.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
 import 'package:omnistream_iptv/features/playlist/domain/repositories/playlist_profile_repository.dart';
 import 'package:omnistream_iptv/features/playlist/data/models/playlist_profile_model.dart';
 
 class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
-  // CORRECCIÓN: Usamos el tipo específico PlaylistProfileLocalDataSource
   final PlaylistProfileLocalDataSource localDataSource;
   final FirebaseFirestore? firestore;
   final FirebaseAuth? firebaseAuth;
@@ -59,8 +58,10 @@ class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
   @override
   Future<Either<Failure, void>> deletePlaylistProfile(String id) async {
     try {
+      // 1. Borrar de Hive
       await localDataSource.deletePlaylistProfile(id);
 
+      // 2. Borrar de Firestore
       final user = firebaseAuth?.currentUser;
       if (user != null && firestore != null) {
         await firestore!

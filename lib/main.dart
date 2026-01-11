@@ -6,36 +6,47 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-// Imports Funcionalidad
 import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_dashboard_page.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_home_page.dart'; 
 import 'package:omnistream_iptv/core/theme/app_theme.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/channel_grid_page.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/video_player_page.dart';
 import 'package:omnistream_iptv/features/channels/presentation/pages/quad_view_page.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart'; // CORREGIDO SEGÚN LOG
-
+import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_home_page.dart'; // Asegúrate de importar esto
+import 'package:omnistream_iptv/features/speed_test/presentation/pages/speed_test_page.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'injection_container.dart' as di;
+import 'package:omnistream_iptv/injection_container.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:omnistream_iptv/features/playlist/data/models/playlist_profile_model.dart';
 
 final _router = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/dashboard',
   routes: [
     GoRoute(
-      path: '/',
-      name: 'dashboard',
+      path: '/dashboard',
       builder: (context, state) => const PlaylistDashboardPage(),
     ),
     GoRoute(
-      path: '/playlist_home',
-      name: 'playlist_home',
+      path: '/home',
+      name: 'playlist_home', // <--- ¡ESTO FALTABA! Sin esto, crashea al entrar.
       builder: (context, state) {
-        final playlistUrl = state.extra as String?;
-        return PlaylistHomePage(playlistUrl: playlistUrl ?? '');
+        // Recibimos la URL como parámetro extra
+        final playlistUrl = state.extra as String? ?? '';
+        return PlaylistHomePage(playlistUrl: playlistUrl);
+      },
+    ),
+    GoRoute(
+      path: '/speed_test',
+      builder: (context, state) => const SpeedTestPage(),
+    ),
+    GoRoute(
+      path: '/quad_view',
+      builder: (context, state) {
+        final channels = state.extra as List<Channel>?;
+        return QuadViewPage(channels: channels ?? []);
       },
     ),
     GoRoute(
@@ -43,27 +54,32 @@ final _router = GoRouter(
       name: 'channels',
       builder: (context, state) {
         final playlistUrl = state.extra as String?;
-        return ChannelGridPage(playlistUrl: playlistUrl ?? '');
-      },
-    ),
-    GoRoute(
-      path: '/quad_view',
-      name: 'quad_view',
-      builder: (context, state) {
-        // CORREGIDO: QuadView espera una lista de canales, no una URL
-        return const QuadViewPage(channels: []); 
+        if (playlistUrl == null) {
+          return const Scaffold(
+            body: Center(child: Text('Error: URL de la lista no proporcionada.')),
+          );
+        }
+        return BlocProvider(
+          create: (context) => sl<ChannelBloc>()
+            ..add(LoadChannels(
+              url: playlistUrl, 
+              playlistId: playlistUrl,
+            )), 
+          child: ChannelGridPage(playlistUrl: playlistUrl),
+        );
       },
     ),
     GoRoute(
       path: '/player',
       name: 'player',
       builder: (context, state) {
-        final extras = state.extra as Map<String, dynamic>?;
-        final dynamic channel = extras?['channel'];
-        final dynamic channels = extras?['channels'];
-
+        final extra = state.extra as Map<String, dynamic>?;
+        final channel = extra?["channel"] as Channel?;
+        final channels = extra?["channels"] as List<Channel>?;
         if (channel == null) {
-          return const Scaffold(body: Center(child: Text('Error: Canal no válido')));
+          return const Scaffold(
+            body: Center(child: Text('Error: Channel no proporcionado.')),
+          );
         }
         return VideoPlayerPage(channel: channel, channels: channels ?? []);
       },
@@ -82,7 +98,9 @@ void main() async {
   }
 
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     await FirebaseAuth.instance.signInAnonymously(); 
     debugPrint("✅ Usuario Logueado ID: ${FirebaseAuth.instance.currentUser?.uid}");
   } catch (e) {
@@ -90,6 +108,7 @@ void main() async {
   }
 
   await Hive.initFlutter();
+  Hive.registerAdapter(PlaylistProfileModelAdapter()); 
   await di.init();
 
   runApp(const MyApp());
@@ -102,14 +121,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => di.sl<PlaylistProfileBloc>()..add(LoadPlaylistProfiles())),
-        BlocProvider(create: (_) => di.sl<ChannelBloc>()),
+        BlocProvider(
+          create: (_) => di.sl<PlaylistProfileBloc>()..add(LoadPlaylistProfiles()),
+        ),
       ],
       child: MaterialApp.router(
+        routerConfig: _router,
         title: 'OmniStream IPTV',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        routerConfig: _router,
       ),
     );
   }

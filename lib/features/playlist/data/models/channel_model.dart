@@ -34,6 +34,7 @@ class ChannelModel extends Channel {
           group: group,
         );
 
+  // Convertir de Entidad (Domain) a Modelo (Data)
   factory ChannelModel.fromEntity(Channel channel) {
     return ChannelModel(
       id: channel.id,
@@ -42,5 +43,29 @@ class ChannelModel extends Channel {
       url: channel.url,
       group: channel.group,
     );
+  }
+
+  // --- MÉTODOS AÑADIDOS PARA FIREBASE ---
+
+  // Convertir de JSON (Firebase) a Modelo
+  factory ChannelModel.fromJson(Map<String, dynamic> json) {
+    return ChannelModel(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Sin Nombre',
+      logoUrl: json['logoUrl'] as String?,
+      url: json['url'] as String? ?? '',
+      group: json['group'] as String?,
+    );
+  }
+
+  // Convertir de Modelo a JSON (Firebase)
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'logoUrl': logoUrl,
+      'url': url,
+      'group': group,
+    };
   }
 }
