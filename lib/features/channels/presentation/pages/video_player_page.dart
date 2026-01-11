@@ -26,7 +26,13 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   // ESTADO INTERFAZ
   bool _areControlsVisible = true;
   bool _isChannelListVisible = false;
+  bool _isLoading = false; 
   Timer? _hideTimer;
+
+  // ESTADO DE SELECCIÓN (MEMORIA MANUAL)
+  // Guardamos aquí lo que el usuario elige para que no se pierda al recargar
+  String _savedAudioId = 'auto'; 
+  String _savedSubtitleId = 'auto';
 
   // ESTADO DATOS
   late Channel _currentChannel;
@@ -45,24 +51,23 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _currentChannel = widget.channel;
     _groupChannels();
 
-    // 1. MODO CINE
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
 
-    // 2. CONFIGURACIÓN MOTOR
     player = Player(
       configuration: const PlayerConfiguration(
-        bufferSize: 32 * 1024 * 1024, 
+        // 10MB: Equilibrio perfecto para estabilidad y rapidez
+        bufferSize: 10 * 1024 * 1024, 
         title: 'OmniStream Player',
       ),
     );
-    // Ajustes finos para IPTV
-    (player.platform as dynamic).setProperty('demuxer-max-bytes', (128 * 1024 * 1024).toString());
-    (player.platform as dynamic).setProperty('demuxer-max-back-bytes', (32 * 1024 * 1024).toString());
+    
+    // Optimizaciones de red
     (player.platform as dynamic).setProperty('network-timeout', '20');
+    (player.platform as dynamic).setProperty('hls-bitrate', 'max');
 
     controller = VideoController(player);
     player.open(Media(_currentChannel.url));
@@ -86,9 +91,21 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   void _switchChannel(Channel newChannel) {
     setState(() {
       _currentChannel = newChannel;
+      _isLoading = true;
+      // Al cambiar de canal, reseteamos las preferencias a 'Auto'
+      _savedAudioId = 'auto';
+      _savedSubtitleId = 'auto';
     });
+    
+    // Reseteamos propiedades de audio en el motor
+    (player.platform as dynamic).setProperty('aid', 'auto');
+    (player.platform as dynamic).setProperty('sid', 'auto');
+
     player.open(Media(newChannel.url));
-    // No reseteamos timer para permitir zapping rápido continuo
+    
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) setState(() => _isLoading = false);
+    });
   }
 
   void _toggleChannelList() {
@@ -96,7 +113,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       _isChannelListVisible = !_isChannelListVisible;
       if (_isChannelListVisible) {
         _areControlsVisible = false;
-        _hideTimer?.cancel(); // Parar timer para que la lista no se cierre sola
+        _hideTimer?.cancel(); 
       } else {
         _areControlsVisible = true;
         _startHideTimer();
@@ -104,10 +121,32 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     });
   }
 
-  // --- LOGICA DE AUDIO Y SUBTÍTULOS ---
   void _showSettingsDialog() {
-    // Ocultamos controles primero para limpiar la pantalla
     setState(() => _areControlsVisible = false);
+
+    // Texto bonito para la interfaz
+    String audioLabel = "Auto";
+    if (_savedAudioId == 'no') audioLabel = "Desactivado";
+    else if (_savedAudioId != 'auto') {
+      // Intentamos buscar el nombre del track, si no, mostramos el ID
+      try {
+        final track = player.state.tracks.audio.firstWhere((t) => t.id == _savedAudioId);
+        audioLabel = track.language ?? track.title ?? "Pista $_savedAudioId";
+      } catch (_) {
+        audioLabel = "Pista $_savedAudioId";
+      }
+    }
+
+    String subLabel = "Auto";
+    if (_savedSubtitleId == 'no') subLabel = "Desactivado";
+    else if (_savedSubtitleId != 'auto') {
+      try {
+        final track = player.state.tracks.subtitle.firstWhere((t) => t.id == _savedSubtitleId);
+        subLabel = track.language ?? track.title ?? "Pista $_savedSubtitleId";
+      } catch (_) {
+        subLabel = "Pista $_savedSubtitleId";
+      }
+    }
 
     showModalBottomSheet(
       context: context,
@@ -128,12 +167,12 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               ),
               const Padding(
                 padding: EdgeInsets.only(bottom: 10),
-                child: Text("Ajustes de Reproducción", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text("Ajustes", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               ListTile(
                 leading: const Icon(Icons.audiotrack, color: Colors.blueAccent),
-                title: const Text("Pista de Audio", style: TextStyle(color: Colors.white)),
-                trailing: Text(player.state.track.audio.id == 'no' ? 'Desactivado' : (player.state.track.audio.language ?? player.state.track.audio.id ?? "Auto"), style: const TextStyle(color: Colors.white54)),
+                title: const Text("Audio", style: TextStyle(color: Colors.white)),
+                trailing: Text(audioLabel, style: const TextStyle(color: Colors.white54)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _showTrackSelection("audio");
@@ -142,7 +181,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               ListTile(
                 leading: const Icon(Icons.subtitles, color: Colors.blueAccent),
                 title: const Text("Subtítulos", style: TextStyle(color: Colors.white)),
-                trailing: Text(player.state.track.subtitle.id == 'no' ? 'Desactivado' : (player.state.track.subtitle.language ?? player.state.track.subtitle.id ?? "Auto"), style: const TextStyle(color: Colors.white54)),
+                trailing: Text(subLabel, style: const TextStyle(color: Colors.white54)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _showTrackSelection("subtitle");
@@ -154,13 +193,14 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         ),
       ),
     ).then((_) {
-      // Al cerrar el diálogo, si no hay lista visible, mostrar controles brevemente
       if (!_isChannelListVisible) _toggleControls();
     });
   }
 
   void _showTrackSelection(String type) {
-    final tracks = type == "audio" ? player.state.tracks.audio : player.state.tracks.subtitle;
+    final isAudio = type == "audio";
+    final tracks = isAudio ? player.state.tracks.audio : player.state.tracks.subtitle;
+    final currentSavedId = isAudio ? _savedAudioId : _savedSubtitleId;
     
     showModalBottomSheet(
       context: context,
@@ -175,41 +215,63 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text("Seleccionar ${type == 'audio' ? 'Audio' : 'Subtítulo'}", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text("Seleccionar ${isAudio ? 'Audio' : 'Subtítulo'}", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: tracks.length,
-                itemBuilder: (context, index) {
-                  final track = tracks[index];
-                  // Determinamos si es el activo
-                  final isActive = type == "audio" 
-                      ? player.state.track.audio == track 
-                      : player.state.track.subtitle == track;
+              child: ListView(
+                children: [
+                  // OPCIÓN AUTO
+                  _buildTrackTile(ctx, type, "auto", "Auto (Por defecto)", currentSavedId == 'auto'),
+                  
+                  // OPCIÓN DESACTIVADO
+                  _buildTrackTile(ctx, type, "no", "Desactivado", currentSavedId == 'no'),
+                  
+                  const Divider(color: Colors.white24),
 
-                  return ListTile(
-                    selected: isActive,
-                    selectedTileColor: Colors.blueAccent.withOpacity(0.2),
-                    leading: isActive ? const Icon(Icons.check, color: Colors.blueAccent) : const SizedBox(width: 24),
-                    title: Text(
-                      track.language ?? track.title ?? track.id ?? "Desconocido",
-                      style: TextStyle(color: isActive ? Colors.blueAccent : Colors.white),
-                    ),
-                    onTap: () {
-                      if (type == "audio") {
-                        player.setAudioTrack(track as AudioTrack);
-                      } else {
-                        player.setSubtitleTrack(track as SubtitleTrack);
-                      }
-                      Navigator.pop(ctx);
-                    },
-                  );
-                },
+                  // LISTA DE PISTAS REALES
+                  ...tracks.map((track) {
+                    final label = track.language ?? track.title ?? track.id ?? "Desconocido";
+                    return _buildTrackTile(ctx, type, track.id ?? "", label, currentSavedId == track.id);
+                  }).toList(),
+                ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTrackTile(BuildContext ctx, String type, String id, String label, bool isSelected) {
+    return ListTile(
+      selected: isSelected,
+      selectedTileColor: Colors.blueAccent.withOpacity(0.2),
+      leading: isSelected ? const Icon(Icons.check, color: Colors.blueAccent) : const SizedBox(width: 24),
+      title: Text(label, style: TextStyle(color: isSelected ? Colors.blueAccent : Colors.white)),
+      onTap: () async {
+        Navigator.pop(ctx);
+        setState(() {
+          _isLoading = true;
+          // Guardamos la elección manualmente
+          if (type == "audio") _savedAudioId = id;
+          else _savedSubtitleId = id;
+        });
+
+        // Configuramos el motor antes de recargar
+        // 'aid' = Audio ID, 'sid' = Subtitle ID
+        // id puede ser 'auto', 'no', o un número '1', '2'...
+        if (type == "audio") {
+          await (player.platform as dynamic).setProperty('aid', id);
+        } else {
+          await (player.platform as dynamic).setProperty('sid', id);
+        }
+
+        // Recarga dura (Hard Reload) para sincronización perfecta
+        await player.open(Media(_currentChannel.url));
+        
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if (mounted) setState(() => _isLoading = false);
+      },
     );
   }
 
@@ -285,7 +347,22 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                 child: Video(controller: controller, controls: NoVideoControls, fit: _videoFit),
               ),
 
-              if (_areControlsVisible && !_isChannelListVisible)
+              if (_isLoading)
+                Container(
+                  color: Colors.black, 
+                  child: const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: Colors.blueAccent),
+                        SizedBox(height: 20),
+                        Text("Cargando...", style: TextStyle(color: Colors.white, fontSize: 12))
+                      ],
+                    ),
+                  ),
+                ),
+
+              if (_areControlsVisible && !_isChannelListVisible && !_isLoading)
                 _buildMainInterface(),
 
               AnimatedPositioned(
@@ -374,15 +451,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                   ),
                   const SizedBox(width: 10),
                   
-                  // --- LOGO DEL CANAL ---
                   if (_currentChannel.logoUrl != null && _currentChannel.logoUrl!.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(right: 15),
                       width: 50, height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white10,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(8)),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
@@ -429,14 +502,15 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                     backgroundColor: Colors.blueAccent,
                     child: StreamBuilder<bool>(
                       stream: player.stream.playing,
+                      initialData: true,
                       builder: (context, snapshot) {
-                        return Icon((snapshot.data ?? false) ? Icons.pause : Icons.play_arrow, size: 30);
+                        return Icon((snapshot.data ?? true) ? Icons.pause : Icons.play_arrow, size: 30);
                       },
                     ),
                     onPressed: player.playOrPause,
                   ),
-                  _buildPlayerButton(Icons.dvr, "Guía", () {}), // Próximamente EPG
-                  _buildPlayerButton(Icons.settings, "Ajustes", _showSettingsDialog), // <-- AHORA FUNCIONA
+                  _buildPlayerButton(Icons.dvr, "Guía", () {}), 
+                  _buildPlayerButton(Icons.settings, "Ajustes", _showSettingsDialog),
                 ],
               ),
             ),
