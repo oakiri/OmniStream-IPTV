@@ -43,21 +43,23 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   void initState() {
     super.initState();
     _currentChannel = widget.channel;
-    
     _groupChannels();
 
+    // 1. MODO CINE
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
 
+    // 2. CONFIGURACIÓN MOTOR
     player = Player(
       configuration: const PlayerConfiguration(
         bufferSize: 32 * 1024 * 1024, 
         title: 'OmniStream Player',
       ),
     );
+    // Ajustes finos para IPTV
     (player.platform as dynamic).setProperty('demuxer-max-bytes', (128 * 1024 * 1024).toString());
     (player.platform as dynamic).setProperty('demuxer-max-back-bytes', (32 * 1024 * 1024).toString());
     (player.platform as dynamic).setProperty('network-timeout', '20');
@@ -71,7 +73,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
   void _groupChannels() {
     if (widget.channels == null) return;
-
     for (var channel in widget.channels!) {
       final categoryName = channel.group ?? "Otros"; 
       if (!_channelsByCategory.containsKey(categoryName)) {
@@ -85,25 +86,131 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   void _switchChannel(Channel newChannel) {
     setState(() {
       _currentChannel = newChannel;
-      // Opcional: Cerrar lista al elegir (_isChannelListVisible = false)
-      // O dejarla abierta para zapping rápido. Aquí la dejamos abierta.
     });
     player.open(Media(newChannel.url));
-    // No reiniciamos el timer aquí para que la lista siga visible
+    // No reseteamos timer para permitir zapping rápido continuo
   }
 
-  // LOGICA CORREGIDA: La lista detiene el temporizador
   void _toggleChannelList() {
     setState(() {
       _isChannelListVisible = !_isChannelListVisible;
       if (_isChannelListVisible) {
         _areControlsVisible = false;
-        _hideTimer?.cancel(); // ¡IMPORTANTE! Paramos el reloj para que no se cierre
+        _hideTimer?.cancel(); // Parar timer para que la lista no se cierre sola
       } else {
-        _areControlsVisible = true; // Si cerramos la lista, vuelven los controles
+        _areControlsVisible = true;
         _startHideTimer();
       }
     });
+  }
+
+  // --- LOGICA DE AUDIO Y SUBTÍTULOS ---
+  void _showSettingsDialog() {
+    // Ocultamos controles primero para limpiar la pantalla
+    setState(() => _areControlsVisible = false);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E).withOpacity(0.95),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(2)),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 10),
+                child: Text("Ajustes de Reproducción", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.audiotrack, color: Colors.blueAccent),
+                title: const Text("Pista de Audio", style: TextStyle(color: Colors.white)),
+                trailing: Text(player.state.track.audio.id == 'no' ? 'Desactivado' : (player.state.track.audio.language ?? player.state.track.audio.id ?? "Auto"), style: const TextStyle(color: Colors.white54)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showTrackSelection("audio");
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.subtitles, color: Colors.blueAccent),
+                title: const Text("Subtítulos", style: TextStyle(color: Colors.white)),
+                trailing: Text(player.state.track.subtitle.id == 'no' ? 'Desactivado' : (player.state.track.subtitle.language ?? player.state.track.subtitle.id ?? "Auto"), style: const TextStyle(color: Colors.white54)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showTrackSelection("subtitle");
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) {
+      // Al cerrar el diálogo, si no hay lista visible, mostrar controles brevemente
+      if (!_isChannelListVisible) _toggleControls();
+    });
+  }
+
+  void _showTrackSelection(String type) {
+    final tracks = type == "audio" ? player.state.tracks.audio : player.state.tracks.subtitle;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E).withOpacity(0.95),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text("Seleccionar ${type == 'audio' ? 'Audio' : 'Subtítulo'}", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: tracks.length,
+                itemBuilder: (context, index) {
+                  final track = tracks[index];
+                  // Determinamos si es el activo
+                  final isActive = type == "audio" 
+                      ? player.state.track.audio == track 
+                      : player.state.track.subtitle == track;
+
+                  return ListTile(
+                    selected: isActive,
+                    selectedTileColor: Colors.blueAccent.withOpacity(0.2),
+                    leading: isActive ? const Icon(Icons.check, color: Colors.blueAccent) : const SizedBox(width: 24),
+                    title: Text(
+                      track.language ?? track.title ?? track.id ?? "Desconocido",
+                      style: TextStyle(color: isActive ? Colors.blueAccent : Colors.white),
+                    ),
+                    onTap: () {
+                      if (type == "audio") {
+                        player.setAudioTrack(track as AudioTrack);
+                      } else {
+                        player.setSubtitleTrack(track as SubtitleTrack);
+                      }
+                      Navigator.pop(ctx);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _startClock() {
@@ -131,31 +238,25 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _startHideTimer();
   }
 
-  // LOGICA CORREGIDA: El temporizador respeta la lista abierta
   void _startHideTimer() {
     _hideTimer?.cancel();
-    if (_isChannelListVisible) return; // Si la lista está abierta, NO iniciamos cuenta atrás
+    if (_isChannelListVisible) return;
 
     _hideTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) {
-        setState(() {
-          _areControlsVisible = false;
-          // No tocamos _isChannelListVisible aquí
-        });
+        setState(() => _areControlsVisible = false);
       }
     });
   }
 
   void _toggleControls() {
-    // Si la lista está abierta, un toque la cierra
     if (_isChannelListVisible) {
       setState(() {
         _isChannelListVisible = false;
-        _areControlsVisible = false; // También ocultamos controles al cerrar lista
+        _areControlsVisible = false;
       });
       return;
     }
-
     setState(() => _areControlsVisible = !_areControlsVisible);
     if (_areControlsVisible) _startHideTimer();
   }
@@ -217,10 +318,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                                 return Theme(
                                   data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                                   child: ExpansionTile(
-                                    title: Text(
-                                      category,
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                    ),
+                                    title: Text(category, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                     iconColor: Colors.blueAccent,
                                     collapsedIconColor: Colors.white54,
                                     children: channels.map((ch) {
@@ -229,13 +327,15 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                                         contentPadding: const EdgeInsets.only(left: 30, right: 10),
                                         selected: isSelected,
                                         selectedTileColor: Colors.blueAccent.withOpacity(0.2),
-                                        leading: const Icon(Icons.tv, size: 18, color: Colors.white54),
+                                        leading: SizedBox(
+                                          width: 30, height: 30,
+                                          child: ch.logoUrl != null && ch.logoUrl!.isNotEmpty 
+                                            ? Image.network(ch.logoUrl!, errorBuilder: (c,e,s) => const Icon(Icons.tv, color: Colors.white54, size: 20))
+                                            : const Icon(Icons.tv, color: Colors.white54, size: 20),
+                                        ),
                                         title: Text(
                                           ch.name,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.blueAccent : Colors.white70,
-                                            fontSize: 14,
-                                          ),
+                                          style: TextStyle(color: isSelected ? Colors.blueAccent : Colors.white70, fontSize: 14),
                                           maxLines: 1, overflow: TextOverflow.ellipsis,
                                         ),
                                         onTap: () => _switchChannel(ch),
@@ -273,23 +373,47 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 10),
+                  
+                  // --- LOGO DEL CANAL ---
+                  if (_currentChannel.logoUrl != null && _currentChannel.logoUrl!.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(right: 15),
+                      width: 50, height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          _currentChannel.logoUrl!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.tv, color: Colors.white54),
+                        ),
+                      ),
+                    ),
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           _currentChannel.name,
-                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 10, color: Colors.black)]),
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                         ),
                         if (_currentChannel.group != null)
-                          Text(_currentChannel.group!, style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.8), borderRadius: BorderRadius.circular(4)),
+                            child: Text(_currentChannel.group!, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ),
                       ],
                     ),
                   ),
                   const Icon(Icons.access_time, color: Colors.white70),
                   const SizedBox(width: 5),
-                  Text(_currentTime, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(_currentTime, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 10, color: Colors.black)])),
                 ],
               ),
             ),
@@ -311,8 +435,8 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                     ),
                     onPressed: player.playOrPause,
                   ),
-                  _buildPlayerButton(Icons.dvr, "Guía", () {}),
-                  _buildPlayerButton(Icons.settings, "Ajustes", () {}),
+                  _buildPlayerButton(Icons.dvr, "Guía", () {}), // Próximamente EPG
+                  _buildPlayerButton(Icons.settings, "Ajustes", _showSettingsDialog), // <-- AHORA FUNCIONA
                 ],
               ),
             ),
@@ -339,9 +463,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white, size: 28),
+            Icon(icon, color: Colors.white, size: 28, shadows: const [Shadow(blurRadius: 5, color: Colors.black)]),
             const SizedBox(height: 4),
-            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500, shadows: [Shadow(blurRadius: 5, color: Colors.black)])),
           ],
         ),
       ),
