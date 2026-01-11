@@ -51,6 +51,7 @@ dependencies:
 
   # --- Utils ---
   http: ^1.2.1
+  internet_connection_checker: ^1.0.0+1  # <--- AÑADE ESTA LÍNEA
   connectivity_plus: ^6.0.3
   crypto: ^3.0.3
   xml: ^6.5.0

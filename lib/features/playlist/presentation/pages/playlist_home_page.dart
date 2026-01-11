@@ -10,6 +10,15 @@ class PlaylistHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true, // Para que el gradiente suba hasta arriba
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          onPressed: () => context.go('/dashboard'), // Volver a mis listas
+        ),
+      ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -41,82 +50,85 @@ class PlaylistHomePage extends StatelessWidget {
                         ),
                         Text(
                           "Usuario OmniStream",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
                         ),
                       ],
                     ),
-                    const Icon(Icons.account_circle, color: Colors.white, size: 50),
+                    const CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Colors.white24,
+                      child: Icon(Icons.person, color: Colors.white),
+                    )
                   ],
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
-              // 2. GRID DE BOTONES PRINCIPALES
+              // 2. GRID PRINCIPAL (4 Botones grandes)
               Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  padding: const EdgeInsets.all(20),
-                  mainAxisSpacing: 20,
-                  crossAxisSpacing: 20,
-                  childAspectRatio: 1.1,
-                  children: [
-                    // LIVE TV
-                    _MenuButton(
-                      title: "LIVE TV",
-                      icon: Icons.live_tv,
-                      color1: Colors.blue.shade900,
-                      color2: Colors.blue.shade500,
-                      onTap: () => context.pushNamed('channels', extra: playlistUrl),
-                    ),
-                    // MOVIES
-                    _MenuButton(
-                      title: "MOVIES",
-                      icon: Icons.movie_filter,
-                      color1: Colors.orange.shade900,
-                      color2: Colors.orange.shade500,
-                      onTap: () => _showComingSoon(context, "Películas"),
-                    ),
-                    // SERIES
-                    _MenuButton(
-                      title: "SERIES",
-                      icon: Icons.video_collection,
-                      color1: Colors.purple.shade900,
-                      color2: Colors.purple.shade500,
-                      onTap: () => _showComingSoon(context, "Series"),
-                    ),
-                    // MULTI-SCREEN (Tu QuadView)
-                    _MenuButton(
-                      title: "MULTI-SCREEN",
-                      icon: Icons.grid_view_rounded,
-                      color1: Colors.teal.shade900,
-                      color2: Colors.teal.shade500,
-                      onTap: () => context.pushNamed('quad_view', extra: playlistUrl),
-                    ),
-                  ],
-                ),
-              ),
-
-              // 3. BARRA INFERIOR DE AJUSTES
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 15,
+                    mainAxisSpacing: 15,
+                    childAspectRatio: 1.1,
+                    children: [
+                      _MenuCard(
+                        title: "LIVE TV",
+                        icon: Icons.live_tv,
+                        color1: const Color(0xFF42A5F5),
+                        color2: const Color(0xFF1565C0),
+                        onTap: () {
+                          // Navegar a la parrilla de canales pasando la URL
+                          context.pushNamed('channels', extra: playlistUrl);
+                        },
+                      ),
+                      _MenuCard(
+                        title: "MOVIES",
+                        icon: Icons.movie,
+                        color1: const Color(0xFFEF5350),
+                        color2: const Color(0xFFC62828),
+                        onTap: () {
+                          // Futura implementación
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Próximamente: Películas")));
+                        },
+                      ),
+                      _MenuCard(
+                        title: "SERIES",
+                        icon: Icons.tv,
+                        color1: const Color(0xFFFFA726),
+                        color2: const Color(0xFFEF6C00),
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Próximamente: Series")));
+                        },
+                      ),
+                      _MenuCard(
+                        title: "MULTI-SCREEN",
+                        icon: Icons.grid_view,
+                        color1: const Color(0xFF66BB6A),
+                        color2: const Color(0xFF2E7D32),
+                        onTap: () {
+                          // Navegar a la vista múltiple
+                          context.push('/quad_view');
+                        },
+                      ),
+                    ],
                   ),
                 ),
+              ),
+
+              // 3. BARRA INFERIOR (Ajustes, EPG, etc)
+              Container(
+                height: 80,
+                color: Colors.black45,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _BottomAction(icon: Icons.settings, label: "Settings"),
-                    _BottomAction(icon: Icons.account_box, label: "Account"),
-                    _BottomAction(icon: Icons.refresh, label: "Refresh"),
+                    _BottomAction(icon: Icons.dvr, label: "Grabaciones"),
+                    _BottomAction(icon: Icons.speed, label: "Test Velocidad"),
+                    _BottomAction(icon: Icons.settings, label: "Ajustes"),
                   ],
                 ),
               ),
@@ -126,22 +138,16 @@ class PlaylistHomePage extends StatelessWidget {
       ),
     );
   }
-
-  void _showComingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("$feature estará disponible próximamente")),
-    );
-  }
 }
 
-class _MenuButton extends StatelessWidget {
+class _MenuCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color color1;
   final Color color2;
   final VoidCallback onTap;
 
-  const _MenuButton({
+  const _MenuCard({
     required this.title,
     required this.icon,
     required this.color1,
@@ -153,10 +159,10 @@ class _MenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(25),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(colors: [color1, color2], begin: Alignment.topLeft, end: Alignment.bottomRight),
           boxShadow: [
             BoxShadow(color: color1.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 5)),
@@ -165,7 +171,7 @@ class _MenuButton extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 55),
+            Icon(icon, color: Colors.white, size: 50),
             const SizedBox(height: 10),
             Text(
               title,
@@ -189,9 +195,9 @@ class _BottomAction extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white70, size: 28),
-        const SizedBox(height: 5),
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        Icon(icon, color: Colors.white70),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
       ],
     );
   }

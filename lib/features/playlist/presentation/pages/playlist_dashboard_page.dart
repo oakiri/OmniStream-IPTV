@@ -26,6 +26,7 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
   void _showAddPlaylistDialog() {
     showDialog(
       context: context,
+      barrierDismissible: false, // Obliga a usar botones para cerrar
       builder: (context) {
         return BlocProvider<PlaylistProfileBloc>.value(
           value: _profileBloc,
@@ -38,12 +39,13 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Fondo negro elegante
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: const Text('Mis Listas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+        title: const Text('Mis Listas', 
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
       ),
       body: BlocProvider.value(
         value: _profileBloc,
@@ -85,84 +87,91 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
       );
     }
     
-    return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, 
-        crossAxisSpacing: 20, 
-        mainAxisSpacing: 20, 
-        childAspectRatio: 0.85, // Ajuste para que las tarjetas sean un poco más altas
-      ),
-      itemCount: profiles.length,
-      itemBuilder: (context, index) {
-        final profile = profiles[index];
-        return _buildProfileCard(profile);
-      },
+    // Usamos LayoutBuilder para adaptar el Grid si es tablet o móvil
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Si es muy ancho (tablet/TV), ponemos 3 columnas, si no 2
+        int crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+        
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 20, 
+            mainAxisSpacing: 20, 
+            childAspectRatio: 0.8, // Tarjetas más altas para que quepa el botón
+          ),
+          itemCount: profiles.length,
+          itemBuilder: (context, index) {
+            final profile = profiles[index];
+            return _buildProfileCard(profile);
+          },
+        );
+      }
     );
   }
 
   Widget _buildProfileCard(PlaylistProfile profile) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF1A1A1A), // Gris oscuro elegante
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.white10), // Borde sutil
         boxShadow: [
-          BoxShadow(color: Colors.blueAccent.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 5)),
         ],
-        border: Border.all(color: Colors.white10),
       ),
       child: Stack(
         children: [
-          // Área Clickable para entrar
-          InkWell(
-            onTap: () {
-              // Navegación corregida: Ahora 'playlist_home' existe en main.dart
-              context.pushNamed('playlist_home', extra: profile.url);
-            },
-            borderRadius: BorderRadius.circular(20),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Centrado Vertical
-                crossAxisAlignment: CrossAxisAlignment.center, // Centrado Horizontal
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.blueAccent.withOpacity(0.1),
+          // Contenido Principal
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.tv, size: 40, color: Colors.blueAccent),
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  profile.name,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const Spacer(),
+                
+                // BOTÓN ENTRAR EXPLÍCITO
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Icon(Icons.tv, size: 40, color: Colors.blueAccent),
+                    onPressed: () => context.pushNamed('playlist_home', extra: profile.url),
+                    child: const Text('ENTRAR', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    profile.name,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text("ENTRAR", style: TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold)),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           
-          // Botón de Borrar (Arriba a la derecha)
+          // Botón Borrar (Esquina superior derecha)
           Positioned(
-            top: 5, 
-            right: 5,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => _showDeleteConfirm(profile),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Icon(Icons.delete_outline, color: Colors.red[300], size: 20),
-                ),
-              ),
+            top: 0,
+            right: 0,
+            child: IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              onPressed: () => _showDeleteConfirm(profile),
             ),
           ),
         ],
@@ -175,16 +184,19 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.grey[900],
-        title: const Text('¿Borrar lista?', style: TextStyle(color: Colors.white)),
-        content: Text('Se eliminará "${profile.name}" de tus dispositivos.', style: const TextStyle(color: Colors.white70)),
+        title: const Text('¿Eliminar lista?', style: TextStyle(color: Colors.white)),
+        content: Text('Vas a eliminar "${profile.name}".', style: const TextStyle(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCELAR', style: TextStyle(color: Colors.grey))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx), 
+            child: const Text('CANCELAR', style: TextStyle(color: Colors.grey))
+          ),
           TextButton(
             onPressed: () {
               _profileBloc.add(DeleteProfileEvent(profile.id));
               Navigator.pop(ctx);
             }, 
-            child: const Text('BORRAR', style: TextStyle(color: Colors.redAccent))
+            child: const Text('ELIMINAR', style: TextStyle(color: Colors.redAccent))
           ),
         ],
       ),

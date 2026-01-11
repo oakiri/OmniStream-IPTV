@@ -15,10 +15,11 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await remoteDataSource.signInAnonymously();
       return Right(user);
     } on FirebaseAuthException catch (e) {
-      // CORRECCI�N: Constructor posicional, sin 'message:'
-      return Left(ServerFailure(e.message ?? 'Unknown Firebase error'));
+      // CORREGIDO: Usamos el parámetro nombrado 'message:'
+      return Left(ServerFailure(message: e.message ?? 'Unknown Firebase error'));
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      // CORREGIDO: Usamos el parámetro nombrado 'message:'
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 }
