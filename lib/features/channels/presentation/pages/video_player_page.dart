@@ -5,6 +5,9 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
+// 1. IMPORTANTE: Importamos el widget de la Guía que creamos antes
+import 'package:omnistream_iptv/features/channels/presentation/widgets/epg_guide_view.dart'; 
+
 class VideoPlayerPage extends StatefulWidget {
   final Channel channel;
   final List<Channel>? channels;
@@ -29,8 +32,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   bool _isLoading = false; 
   Timer? _hideTimer;
 
-  // ESTADO DE SELECCIÓN (MEMORIA MANUAL)
-  // Guardamos aquí lo que el usuario elige para que no se pierda al recargar
+  // ESTADO DE SELECCIÓN (MEMORIA MANUAL PARA AUDIO)
   String _savedAudioId = 'auto'; 
   String _savedSubtitleId = 'auto';
 
@@ -59,8 +61,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
     player = Player(
       configuration: const PlayerConfiguration(
-        // 10MB: Equilibrio perfecto para estabilidad y rapidez
-        bufferSize: 10 * 1024 * 1024, 
+        bufferSize: 10 * 1024 * 1024, // 10MB: Equilibrio perfecto
         title: 'OmniStream Player',
       ),
     );
@@ -92,12 +93,10 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     setState(() {
       _currentChannel = newChannel;
       _isLoading = true;
-      // Al cambiar de canal, reseteamos las preferencias a 'Auto'
-      _savedAudioId = 'auto';
+      _savedAudioId = 'auto'; // Reset audio al cambiar canal
       _savedSubtitleId = 'auto';
     });
     
-    // Reseteamos propiedades de audio en el motor
     (player.platform as dynamic).setProperty('aid', 'auto');
     (player.platform as dynamic).setProperty('sid', 'auto');
 
@@ -121,14 +120,58 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     });
   }
 
+  // 2. NUEVO MÉTODO: Lógica para abrir la Guía EPG superpuesta
+  void _showEpgGuide() {
+    // Ocultamos los controles normales para dejar sitio a la guía
+    setState(() => _areControlsVisible = false);
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Cerrar Guía",
+      barrierColor: Colors.black54, // Fondo oscuro detrás de la guía
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (ctx, anim1, anim2) {
+        // Filtramos canales para mostrar solo los de la categoría actual
+        final category = _currentChannel.group ?? "Otros";
+        final channelsToShow = _channelsByCategory[category] ?? widget.channels ?? [];
+
+        return Align(
+          alignment: Alignment.center,
+          child: Material(
+            color: Colors.transparent,
+            // Llamamos al Widget que creamos en el otro archivo
+            child: EpgGuideView(
+              channels: channelsToShow,
+              currentChannel: _currentChannel,
+              onChannelSelected: (channel) {
+                // Al hacer clic en un canal de la guía, cambiamos a él
+                _switchChannel(channel); 
+              },
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (ctx, anim1, anim2, child) {
+        // Animación suave deslizante desde abajo
+        return SlideTransition(
+          position: Tween(begin: const Offset(0, 1), end: const Offset(0, 0))
+              .animate(CurvedAnimation(parent: anim1, curve: Curves.easeInOut)),
+          child: child,
+        );
+      },
+    ).then((_) {
+      // Cuando cerramos la guía, volvemos a mostrar controles si toca
+      _toggleControls();
+    });
+  }
+
   void _showSettingsDialog() {
     setState(() => _areControlsVisible = false);
 
-    // Texto bonito para la interfaz
     String audioLabel = "Auto";
     if (_savedAudioId == 'no') audioLabel = "Desactivado";
     else if (_savedAudioId != 'auto') {
-      // Intentamos buscar el nombre del track, si no, mostramos el ID
       try {
         final track = player.state.tracks.audio.firstWhere((t) => t.id == _savedAudioId);
         audioLabel = track.language ?? track.title ?? "Pista $_savedAudioId";
@@ -220,15 +263,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
             Expanded(
               child: ListView(
                 children: [
-                  // OPCIÓN AUTO
                   _buildTrackTile(ctx, type, "auto", "Auto (Por defecto)", currentSavedId == 'auto'),
-                  
-                  // OPCIÓN DESACTIVADO
                   _buildTrackTile(ctx, type, "no", "Desactivado", currentSavedId == 'no'),
-                  
                   const Divider(color: Colors.white24),
-
-                  // LISTA DE PISTAS REALES
                   ...tracks.map((track) {
                     final label = track.language ?? track.title ?? track.id ?? "Desconocido";
                     return _buildTrackTile(ctx, type, track.id ?? "", label, currentSavedId == track.id);
@@ -252,21 +289,16 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         Navigator.pop(ctx);
         setState(() {
           _isLoading = true;
-          // Guardamos la elección manualmente
           if (type == "audio") _savedAudioId = id;
           else _savedSubtitleId = id;
         });
 
-        // Configuramos el motor antes de recargar
-        // 'aid' = Audio ID, 'sid' = Subtitle ID
-        // id puede ser 'auto', 'no', o un número '1', '2'...
         if (type == "audio") {
           await (player.platform as dynamic).setProperty('aid', id);
         } else {
           await (player.platform as dynamic).setProperty('sid', id);
         }
 
-        // Recarga dura (Hard Reload) para sincronización perfecta
         await player.open(Media(_currentChannel.url));
         
         await Future.delayed(const Duration(milliseconds: 1000));
@@ -509,7 +541,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                     ),
                     onPressed: player.playOrPause,
                   ),
-                  _buildPlayerButton(Icons.dvr, "Guía", () {}), 
+                  
+                  // 3. AQUÍ ESTÁ EL CAMBIO VISUAL:
+                  // En lugar de una función vacía () {}, ahora llamamos a _showEpgGuide
+                  _buildPlayerButton(Icons.dvr, "Guía", _showEpgGuide), 
+                  
                   _buildPlayerButton(Icons.settings, "Ajustes", _showSettingsDialog),
                 ],
               ),
