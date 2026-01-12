@@ -1,47 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; // <--- NUEVO IMPORT
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:go_router/go_router.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_dashboard_page.dart';
+
+import 'injection_container.dart' as di;
+
 import 'package:omnistream_iptv/core/theme/app_theme.dart';
-import 'package:omnistream_iptv/features/channels/presentation/pages/channel_grid_page.dart';
-import 'package:omnistream_iptv/features/channels/presentation/pages/video_player_page.dart';
-import 'package:omnistream_iptv/features/channels/presentation/pages/quad_view_page.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_bloc.dart';
 import 'package:omnistream_iptv/features/channels/presentation/bloc/channel_event.dart';
+import 'package:omnistream_iptv/features/channels/presentation/pages/channel_grid_page.dart';
+import 'package:omnistream_iptv/features/channels/presentation/pages/quad_view_page.dart';
+import 'package:omnistream_iptv/features/channels/presentation/pages/video_player_page.dart';
+import 'package:omnistream_iptv/features/playlist/data/models/playlist_profile_model.dart';
+import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
+import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
+import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_dashboard_page.dart';
 import 'package:omnistream_iptv/features/playlist/presentation/pages/playlist_home_page.dart';
 import 'package:omnistream_iptv/features/speed_test/presentation/pages/speed_test_page.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
-import 'injection_container.dart' as di;
-import 'package:omnistream_iptv/injection_container.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:omnistream_iptv/features/playlist/data/models/playlist_profile_model.dart';
 
-// --- BACKGROUND HANDLER SEGURO (Fase 0 Fix) ---
-// Este método debe estar FUERA de cualquier clase y marcado como entry-point.
-// Se ejecuta en un proceso aislado (Isolate), por lo que NO tiene acceso a 'sl' ni a 'Get'.
+/// ✅ IMPORTANTE:
+/// - Mantenemos ESTE nombre porque si el sistema tiene un callback antiguo guardado,
+///   suele seguir apuntando a la función top-level que existía.
+/// - Esta versión NO usa GetX ni DI.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Aseguramos que el motor de Flutter esté listo
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // Inicializamos Firebase solo para este proceso aislado
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // NOTA: No intentes usar 'sl<Service>' aquí porque GetIt no está inicializado en este isolate.
-  // Si necesitas lógica compleja (como TimestampService), debes inicializarla aquí manualmente.
-  debugPrint("📩 Mensaje en segundo plano recibido: ${message.messageId}");
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    debugPrint("📩 FCM background OK (neutralizado): ${message.messageId}");
+  } catch (e, st) {
+    debugPrint("❌ Error FCM background handler: $e");
+    debugPrint("$st");
+  }
 }
 
-final _router = GoRouter(
+final GoRouter _router = GoRouter(
   initialLocation: '/dashboard',
   routes: [
     GoRoute(
@@ -77,12 +81,15 @@ final _router = GoRouter(
             body: Center(child: Text('Error: URL de la lista no proporcionada.')),
           );
         }
+
         return BlocProvider(
-          create: (context) => sl<ChannelBloc>()
-            ..add(LoadChannels(
-              url: playlistUrl, 
-              playlistId: playlistUrl,
-            )), 
+          create: (_) => di.sl<ChannelBloc>()
+            ..add(
+              LoadChannels(
+                url: playlistUrl,
+                playlistId: playlistUrl,
+              ),
+            ),
           child: ChannelGridPage(playlistUrl: playlistUrl),
         );
       },
@@ -94,48 +101,48 @@ final _router = GoRouter(
         final extra = state.extra as Map<String, dynamic>?;
         final channel = extra?["channel"] as Channel?;
         final channels = extra?["channels"] as List<Channel>?;
+
         if (channel == null) {
           return const Scaffold(
             body: Center(child: Text('Error: Channel no proporcionado.')),
           );
         }
+
         return VideoPlayerPage(channel: channel, channels: channels ?? []);
       },
     ),
   ],
 );
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
-  // 1. Cargar Variables de Entorno
+  // 1) Variables de entorno
   try {
     await dotenv.load(fileName: ".env");
-  } catch (e) {
+  } catch (_) {
     debugPrint("⚠️ .env no encontrado");
   }
 
-  // 2. Inicializar Firebase
+  // 2) Firebase
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    
-    // --- REGISTRO DEL HANDLER (Fase 0 Fix) ---
-    // Esto sobrescribe cualquier handler antiguo corrupto
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    await FirebaseAuth.instance.signInAnonymously(); 
+    await FirebaseAuth.instance.signInAnonymously();
     debugPrint("✅ Usuario Logueado ID: ${FirebaseAuth.instance.currentUser?.uid}");
   } catch (e) {
     debugPrint("❌ Error crítico en Firebase: $e");
   }
 
-  // 3. Inicializar Almacenamiento Local e Inyección de Dependencias
+  // 3) Hive + DI
   await Hive.initFlutter();
-  Hive.registerAdapter(PlaylistProfileModelAdapter()); 
+  Hive.registerAdapter(PlaylistProfileModelAdapter());
   await di.init();
+
+  // ✅ CLAVE: registra el background handler LO ÚLTIMO (sobrescribe cualquiera anterior)
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(const MyApp());
 }
@@ -148,7 +155,8 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => di.sl<PlaylistProfileBloc>()..add(LoadPlaylistProfiles()),
+          create: (_) =>
+              di.sl<PlaylistProfileBloc>()..add(LoadPlaylistProfiles()),
         ),
       ],
       child: MaterialApp.router(
