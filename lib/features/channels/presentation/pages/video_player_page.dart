@@ -5,8 +5,10 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
-// 1. IMPORTANTE: Importamos el widget de la Guía que creamos antes
-import 'package:omnistream_iptv/features/channels/presentation/widgets/epg_guide_view.dart'; 
+// Imports para la Guía EPG y los nuevos controles de gestos
+import 'package:omnistream_iptv/features/channels/presentation/widgets/epg_guide_view.dart';
+import 'package:screen_brightness/screen_brightness.dart';
+import 'package:volume_controller/volume_controller.dart';
 
 class VideoPlayerPage extends StatefulWidget {
   final Channel channel;
@@ -32,6 +34,14 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   bool _isLoading = false; 
   Timer? _hideTimer;
 
+  // --- ESTADO PARA GESTOS (VOLUMEN Y BRILLO) ---
+  double _volume = 0.5;
+  double _brightness = 0.5;
+  bool _showVolumeIndicator = false;
+  bool _showBrightnessIndicator = false;
+  Timer? _indicatorTimer;
+  // ----------------------------------------------------
+
   // ESTADO DE SELECCIÓN (MEMORIA MANUAL PARA AUDIO)
   String _savedAudioId = 'auto'; 
   String _savedSubtitleId = 'auto';
@@ -52,6 +62,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     super.initState();
     _currentChannel = widget.channel;
     _groupChannels();
+    
+    // Inicializamos los valores de hardware
+    _initHardwareControls();
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([
@@ -76,6 +89,23 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _startHideTimer();
     _startClock();
   }
+
+  // --- CORRECCIÓN: Usar addListener en lugar de listener ---
+  Future<void> _initHardwareControls() async {
+    try {
+      _volume = await VolumeController.instance.getVolume();
+      _brightness = await ScreenBrightness().current;
+      setState(() {});
+    } catch (e) {
+      debugPrint("Error inicializando controles: $e");
+    }
+    
+    // CORREGIDO AQUÍ: El método se llama 'addListener' en la versión 3.4.0+
+    VolumeController.instance.addListener((volume) {
+      if (mounted) setState(() => _volume = volume);
+    });
+  }
+  // ------------------------------------------------
 
   void _groupChannels() {
     if (widget.channels == null) return;
@@ -107,6 +137,40 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     });
   }
 
+  // --- LÓGICA DE GESTOS VERTICALES ---
+  void _onVerticalDragUpdate(DragUpdateDetails details, bool isRightSide) {
+    // Sensibilidad: deslizar hacia arriba (delta negativo) debe aumentar el valor
+    final double delta = details.primaryDelta! / -200;
+
+    setState(() {
+      if (isRightSide) {
+        // Derecha = Volumen
+        _volume = (_volume + delta).clamp(0.0, 1.0);
+        VolumeController.instance.setVolume(_volume);
+        _showVolumeIndicator = true;
+        _showBrightnessIndicator = false;
+      } else {
+        // Izquierda = Brillo
+        _brightness = (_brightness + delta).clamp(0.0, 1.0);
+        ScreenBrightness().setScreenBrightness(_brightness);
+        _showBrightnessIndicator = true;
+        _showVolumeIndicator = false;
+      }
+    });
+
+    // Ocultar indicadores tras 1.5 segundos de inactividad
+    _indicatorTimer?.cancel();
+    _indicatorTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() {
+          _showVolumeIndicator = false;
+          _showBrightnessIndicator = false;
+        });
+      }
+    });
+  }
+  // ------------------------------------------
+
   void _toggleChannelList() {
     setState(() {
       _isChannelListVisible = !_isChannelListVisible;
@@ -120,19 +184,16 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     });
   }
 
-  // 2. NUEVO MÉTODO: Lógica para abrir la Guía EPG superpuesta
   void _showEpgGuide() {
-    // Ocultamos los controles normales para dejar sitio a la guía
     setState(() => _areControlsVisible = false);
 
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: "Cerrar Guía",
-      barrierColor: Colors.black54, // Fondo oscuro detrás de la guía
+      barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (ctx, anim1, anim2) {
-        // Filtramos canales para mostrar solo los de la categoría actual
         final category = _currentChannel.group ?? "Otros";
         final channelsToShow = _channelsByCategory[category] ?? widget.channels ?? [];
 
@@ -140,12 +201,10 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           alignment: Alignment.center,
           child: Material(
             color: Colors.transparent,
-            // Llamamos al Widget que creamos en el otro archivo
             child: EpgGuideView(
               channels: channelsToShow,
               currentChannel: _currentChannel,
               onChannelSelected: (channel) {
-                // Al hacer clic en un canal de la guía, cambiamos a él
                 _switchChannel(channel); 
               },
             ),
@@ -153,7 +212,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         );
       },
       transitionBuilder: (ctx, anim1, anim2, child) {
-        // Animación suave deslizante desde abajo
         return SlideTransition(
           position: Tween(begin: const Offset(0, 1), end: const Offset(0, 0))
               .animate(CurvedAnimation(parent: anim1, curve: Curves.easeInOut)),
@@ -161,7 +219,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         );
       },
     ).then((_) {
-      // Cuando cerramos la guía, volvemos a mostrar controles si toca
       _toggleControls();
     });
   }
@@ -360,6 +417,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     player.dispose();
     _hideTimer?.cancel();
     _clockTimer?.cancel();
+    _indicatorTimer?.cancel();
+    
+    // CORREGIDO: Usamos removeListener() en lugar de removeListener(listener)
+    VolumeController.instance.removeListener(); 
+    
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     super.dispose();
@@ -371,97 +433,171 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       canPop: true,
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: GestureDetector(
-          onTap: _toggleControls,
-          child: Stack(
-            children: [
-              Center(
-                child: Video(controller: controller, controls: NoVideoControls, fit: _videoFit),
-              ),
+        body: Stack(
+          children: [
+            // 1. REPRODUCTOR
+            Center(
+              child: Video(controller: controller, controls: NoVideoControls, fit: _videoFit),
+            ),
 
-              if (_isLoading)
-                Container(
-                  color: Colors.black, 
-                  child: const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(color: Colors.blueAccent),
-                        SizedBox(height: 20),
-                        Text("Cargando...", style: TextStyle(color: Colors.white, fontSize: 12))
-                      ],
-                    ),
+            // 2. CAPA DE GESTOS
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _toggleControls,
+                    onVerticalDragUpdate: (details) => _onVerticalDragUpdate(details, false),
+                    child: Container(color: Colors.transparent),
                   ),
                 ),
-
-              if (_areControlsVisible && !_isChannelListVisible && !_isLoading)
-                _buildMainInterface(),
-
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                left: _isChannelListVisible ? 0 : -380,
-                top: 0, bottom: 0,
-                width: 380,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.95),
-                    boxShadow: [BoxShadow(color: Colors.black, blurRadius: 20, spreadRadius: 5)],
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _toggleControls,
+                    onVerticalDragUpdate: (details) => _onVerticalDragUpdate(details, true),
+                    child: Container(color: Colors.transparent),
                   ),
+                ),
+              ],
+            ),
+
+            // 3. INDICADORES DE GESTOS
+            if (_showVolumeIndicator)
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(15)),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
-                        color: Colors.white10,
-                        width: double.infinity,
-                        child: const Text("Guía de Canales", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                      ),
-                      Expanded(
-                        child: _channelsByCategory.isNotEmpty 
-                          ? ListView.builder(
-                              itemCount: _sortedCategories.length,
-                              itemBuilder: (context, index) {
-                                final category = _sortedCategories[index];
-                                final channels = _channelsByCategory[category]!;
-                                
-                                return Theme(
-                                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                                  child: ExpansionTile(
-                                    title: Text(category, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                    iconColor: Colors.blueAccent,
-                                    collapsedIconColor: Colors.white54,
-                                    children: channels.map((ch) {
-                                      final isSelected = ch.id == _currentChannel.id;
-                                      return ListTile(
-                                        contentPadding: const EdgeInsets.only(left: 30, right: 10),
-                                        selected: isSelected,
-                                        selectedTileColor: Colors.blueAccent.withOpacity(0.2),
-                                        leading: SizedBox(
-                                          width: 30, height: 30,
-                                          child: ch.logoUrl != null && ch.logoUrl!.isNotEmpty 
-                                            ? Image.network(ch.logoUrl!, errorBuilder: (c,e,s) => const Icon(Icons.tv, color: Colors.white54, size: 20))
-                                            : const Icon(Icons.tv, color: Colors.white54, size: 20),
-                                        ),
-                                        title: Text(
-                                          ch.name,
-                                          style: TextStyle(color: isSelected ? Colors.blueAccent : Colors.white70, fontSize: 14),
-                                          maxLines: 1, overflow: TextOverflow.ellipsis,
-                                        ),
-                                        onTap: () => _switchChannel(ch),
-                                      );
-                                    }).toList(),
-                                  ),
-                                );
-                              },
-                            )
-                          : const Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
+                      Icon(_volume == 0 ? Icons.volume_off : Icons.volume_up, color: Colors.white, size: 40),
+                      const SizedBox(height: 10),
+                      Text("${(_volume * 100).toInt()}%", style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: 100, height: 5,
+                        child: LinearProgressIndicator(
+                          value: _volume, 
+                          backgroundColor: Colors.white24, 
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent)
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ],
-          ),
+
+            if (_showBrightnessIndicator)
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(15)),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.brightness_6, color: Colors.white, size: 40),
+                      const SizedBox(height: 10),
+                      Text("${(_brightness * 100).toInt()}%", style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: 100, height: 5,
+                        child: LinearProgressIndicator(
+                          value: _brightness, 
+                          backgroundColor: Colors.white24, 
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // 4. LOADER
+            if (_isLoading)
+              Container(
+                color: Colors.black, 
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: Colors.blueAccent),
+                      SizedBox(height: 20),
+                      Text("Cargando...", style: TextStyle(color: Colors.white, fontSize: 12))
+                    ],
+                  ),
+                ),
+              ),
+
+            // 5. INTERFAZ DE CONTROLES
+            if (_areControlsVisible && !_isChannelListVisible && !_isLoading)
+              _buildMainInterface(),
+
+            // 6. LISTA LATERAL
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              left: _isChannelListVisible ? 0 : -380,
+              top: 0, bottom: 0,
+              width: 380,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.95),
+                  boxShadow: [BoxShadow(color: Colors.black, blurRadius: 20, spreadRadius: 5)],
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
+                      color: Colors.white10,
+                      width: double.infinity,
+                      child: const Text("Guía de Canales", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                    ),
+                    Expanded(
+                      child: _channelsByCategory.isNotEmpty 
+                        ? ListView.builder(
+                            itemCount: _sortedCategories.length,
+                            itemBuilder: (context, index) {
+                              final category = _sortedCategories[index];
+                              final channels = _channelsByCategory[category]!;
+                              
+                              return Theme(
+                                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                                child: ExpansionTile(
+                                  title: Text(category, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  iconColor: Colors.blueAccent,
+                                  collapsedIconColor: Colors.white54,
+                                  children: channels.map((ch) {
+                                    final isSelected = ch.id == _currentChannel.id;
+                                    return ListTile(
+                                      contentPadding: const EdgeInsets.only(left: 30, right: 10),
+                                      selected: isSelected,
+                                      selectedTileColor: Colors.blueAccent.withOpacity(0.2),
+                                      leading: SizedBox(
+                                        width: 30, height: 30,
+                                        child: ch.logoUrl != null && ch.logoUrl!.isNotEmpty 
+                                          ? Image.network(ch.logoUrl!, errorBuilder: (c,e,s) => const Icon(Icons.tv, color: Colors.white54, size: 20))
+                                          : const Icon(Icons.tv, color: Colors.white54, size: 20),
+                                      ),
+                                      title: Text(
+                                        ch.name,
+                                        style: TextStyle(color: isSelected ? Colors.blueAccent : Colors.white70, fontSize: 14),
+                                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                                      ),
+                                      onTap: () => _switchChannel(ch),
+                                    );
+                                  }).toList(),
+                                ),
+                              );
+                            },
+                          )
+                        : const Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -542,8 +678,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                     onPressed: player.playOrPause,
                   ),
                   
-                  // 3. AQUÍ ESTÁ EL CAMBIO VISUAL:
-                  // En lugar de una función vacía () {}, ahora llamamos a _showEpgGuide
                   _buildPlayerButton(Icons.dvr, "Guía", _showEpgGuide), 
                   
                   _buildPlayerButton(Icons.settings, "Ajustes", _showSettingsDialog),
