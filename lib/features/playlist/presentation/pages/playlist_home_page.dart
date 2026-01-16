@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -46,11 +46,15 @@ class PlaylistHomePage extends StatelessWidget {
                       children: [
                         Text(
                           "Bienvenido,",
-                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+                          style: GoogleFonts.poppins(
+                              color: Colors.white70, fontSize: 14),
                         ),
                         Text(
                           "Usuario OmniStream",
-                          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+                          style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20),
                         ),
                       ],
                     ),
@@ -92,7 +96,9 @@ class PlaylistHomePage extends StatelessWidget {
                         color2: const Color(0xFFC62828),
                         onTap: () {
                           // Futura implementación
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Próximamente: Películas")));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text("Próximamente: Películas")));
                         },
                       ),
                       _MenuCard(
@@ -101,7 +107,9 @@ class PlaylistHomePage extends StatelessWidget {
                         color1: const Color(0xFFFFA726),
                         color2: const Color(0xFFEF6C00),
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Próximamente: Series")));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text("Próximamente: Series")));
                         },
                       ),
                       _MenuCard(
@@ -163,9 +171,15 @@ class _MenuCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(colors: [color1, color2], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          gradient: LinearGradient(
+              colors: [color1, color2],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight),
           boxShadow: [
-            BoxShadow(color: color1.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 5)),
+            BoxShadow(
+                color: color1.withOpacity(0.4),
+                blurRadius: 10,
+                offset: const Offset(0, 5)),
           ],
         ),
         child: Column(
@@ -175,7 +189,10 @@ class _MenuCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               title,
-              style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18),
             ),
           ],
         ),
@@ -197,7 +214,8 @@ class _BottomAction extends StatelessWidget {
       children: [
         Icon(icon, color: Colors.white70),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+        Text(label,
+            style: const TextStyle(color: Colors.white70, fontSize: 10)),
       ],
     );
   }

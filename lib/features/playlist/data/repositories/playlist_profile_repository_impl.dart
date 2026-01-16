@@ -1,79 +1,83 @@
-﻿import 'package:dartz/dartz.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:omnistream_iptv/core/error/failure.dart';
-import 'package:omnistream_iptv/features/playlist/data/datasources/playlist_profile_local_data_source.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
-import 'package:omnistream_iptv/features/playlist/domain/repositories/playlist_profile_repository.dart';
-import 'package:omnistream_iptv/features/playlist/data/models/playlist_profile_model.dart';
+
+import '../../../../core/error/failure.dart';
+import '../../domain/entities/playlist_profile.dart';
+import '../../domain/repositories/playlist_profile_repository.dart';
+import '../datasources/playlist_profile_local_data_source.dart';
+import '../datasources/playlist_profile_remote_data_source.dart';
+import '../models/playlist_profile_model.dart';
 
 class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
   final PlaylistProfileLocalDataSource localDataSource;
-  final FirebaseFirestore? firestore;
-  final FirebaseAuth? firebaseAuth;
+  final PlaylistProfileRemoteDataSource remoteDataSource;
+  final FirebaseAuth firebaseAuth;
 
   PlaylistProfileRepositoryImpl({
     required this.localDataSource,
-    this.firestore,
-    this.firebaseAuth,
+    required this.remoteDataSource,
+    required this.firebaseAuth,
   });
+
+  String get _userId => firebaseAuth.currentUser?.uid ?? 'anonymous';
 
   @override
   Future<Either<Failure, List<PlaylistProfile>>> getPlaylistProfiles() async {
     try {
-      final localProfiles = await localDataSource.getPlaylistProfiles();
-      return Right(localProfiles);
+      // 1) Intentamos local
+      final local = await localDataSource.getProfiles();
+      final localEntities = local.map<PlaylistProfile>((e) => e).toList();
+
+      // 2) Si hay local, devolvemos rápido (UX instantánea)
+      if (localEntities.isNotEmpty) return Right(localEntities);
+
+      // 3) Si no hay local, probamos remoto
+      final remote = await remoteDataSource.getPlaylistProfiles(_userId);
+
+      // guardamos remoto en local para siguientes arranques
+      for (final p in remote) {
+        await localDataSource.saveProfile(p);
+      }
+
+      return Right(remote.map<PlaylistProfile>((e) => e).toList());
     } catch (e) {
-      return const Left(CacheFailure(message: 'Error al cargar perfiles locales'));
+      return Left(Failure(message: e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> addPlaylistProfile(PlaylistProfile profile) async {
+  Future<Either<Failure, void>> addPlaylistProfile(
+      PlaylistProfile profile) async {
     try {
-      final user = firebaseAuth?.currentUser;
-      final model = PlaylistProfileModel(
-        id: profile.id,
-        name: profile.name,
-        url: profile.url,
-        userId: user?.uid ?? 'local',
-      );
-      
-      await localDataSource.savePlaylistProfile(model);
+      final model = profile is PlaylistProfileModel
+          ? profile
+          : PlaylistProfileModel.fromEntity(profile);
 
-      if (user != null && firestore != null) {
-        await firestore!
-            .collection('users')
-            .doc(user.uid)
-            .collection('playlists')
-            .doc(model.id)
-            .set(model.toJson());
-      }
+      await localDataSource.saveProfile(model);
+
+      // remoto best-effort (si falla no rompemos UX)
+      try {
+        await remoteDataSource.saveProfile(_userId, model);
+      } catch (_) {}
+
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(Failure(message: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, void>> deletePlaylistProfile(String id) async {
     try {
-      // 1. Borrar de Hive
-      await localDataSource.deletePlaylistProfile(id);
+      await localDataSource.deleteProfile(id);
 
-      // 2. Borrar de Firestore
-      final user = firebaseAuth?.currentUser;
-      if (user != null && firestore != null) {
-        await firestore!
-            .collection('users')
-            .doc(user.uid)
-            .collection('playlists')
-            .doc(id)
-            .delete();
-      }
+      try {
+        await remoteDataSource.deleteProfile(_userId, id);
+      } catch (_) {}
+
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(Failure(message: e.toString()));
     }
   }
 }

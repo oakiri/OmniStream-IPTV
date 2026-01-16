@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:omnistream_iptv/features/playlist/data/models/channel_model.dart';
 import 'package:omnistream_iptv/core/errors/exceptions.dart';
@@ -15,7 +15,8 @@ class FirebaseChannelDataSourceImpl implements FirebaseChannelDataSource {
   FirebaseChannelDataSourceImpl({required this.firestore, required this.auth});
 
   @override
-  Future<void> syncChannels(String playlistId, List<ChannelModel> channels) async {
+  Future<void> syncChannels(
+      String playlistId, List<ChannelModel> channels) async {
     final user = auth.currentUser;
     if (user == null) throw ServerException();
 

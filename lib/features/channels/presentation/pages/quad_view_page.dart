@@ -25,7 +25,7 @@ class _QuadViewPageState extends State<QuadViewPage> {
 
     for (var i = 0; i < count; i++) {
       // Usamos .url correctamente
-      players[i].open(Media(widget.channels[i].url)); 
+      players[i].open(Media(widget.channels[i].url));
     }
   }
 
@@ -49,7 +49,8 @@ class _QuadViewPageState extends State<QuadViewPage> {
         itemBuilder: (context, index) {
           return Container(
             margin: const EdgeInsets.all(2),
-            decoration: BoxDecoration(border: Border.all(color: Colors.white24)),
+            decoration:
+                BoxDecoration(border: Border.all(color: Colors.white24)),
             child: Video(controller: controllers[index]),
           );
         },

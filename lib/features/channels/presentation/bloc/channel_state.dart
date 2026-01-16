@@ -1,9 +1,9 @@
-﻿import 'package:equatable/equatable.dart';
+import 'package:equatable/equatable.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 abstract class ChannelState extends Equatable {
   const ChannelState();
-  
+
   @override
   List<Object> get props => [];
 }
@@ -13,12 +13,12 @@ class ChannelInitial extends ChannelState {}
 class ChannelLoading extends ChannelState {}
 
 class ChannelLoaded extends ChannelState {
-  final List<Channel> allChannels;      // Todos los canales
-  final List<Channel> displayChannels;  // Los que se ven ahora
-  
+  final List<Channel> allChannels; // Todos los canales
+  final List<Channel> displayChannels; // Los que se ven ahora
+
   // NUEVAS VARIABLES PARA CATEGORÍAS
-  final List<String> categories;        // Lista de grupos: ["All", "Deportes", ...]
-  final String selectedCategory;        // Grupo activo: "Deportes"
+  final List<String> categories; // Lista de grupos: ["All", "Deportes", ...]
+  final String selectedCategory; // Grupo activo: "Deportes"
 
   const ChannelLoaded({
     required this.allChannels,
@@ -44,7 +44,8 @@ class ChannelLoaded extends ChannelState {
   }
 
   @override
-  List<Object> get props => [allChannels, displayChannels, categories, selectedCategory];
+  List<Object> get props =>
+      [allChannels, displayChannels, categories, selectedCategory];
 }
 
 class ChannelError extends ChannelState {

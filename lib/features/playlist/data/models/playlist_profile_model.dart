@@ -1,63 +1,72 @@
-﻿import 'package:hive/hive.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
+import 'package:hive/hive.dart';
+import '../../domain/entities/playlist_profile.dart';
 
 part 'playlist_profile_model.g.dart';
 
 @HiveType(typeId: 1)
-class PlaylistProfileModel extends PlaylistProfile {
+class PlaylistProfileModel extends PlaylistProfile with HiveObjectMixin {
   @HiveField(0)
-  final String id;
+  final String hiveId;
 
   @HiveField(1)
-  final String name;
+  final String hiveName;
 
   @HiveField(2)
-  final String url;
+  final String hiveUrl;
 
   @HiveField(3)
-  final String userId;
+  final String? hiveType;
 
   @HiveField(4)
-  final String? type;
-
-  @HiveField(5)
-  final DateTime? lastUsed;
+  final DateTime? hiveLastUsed;
 
   const PlaylistProfileModel({
-    required this.id,
-    required this.name,
-    required this.url,
-    required this.userId,
-    this.type,
-    this.lastUsed,
-  }) : super(
-          id: id, 
-          name: name, 
-          url: url, 
-          userId: userId,
-          type: type,
-          lastUsed: lastUsed,
+    required this.hiveId,
+    required this.hiveName,
+    required this.hiveUrl,
+    String? hiveType,
+    DateTime? hiveLastUsed,
+  })  : hiveType = hiveType,
+        hiveLastUsed = hiveLastUsed,
+        super(
+          id: hiveId,
+          name: hiveName,
+          url: hiveUrl,
+          type: hiveType,
+          lastUsed: hiveLastUsed,
         );
 
-  factory PlaylistProfileModel.fromEntity(PlaylistProfile profile) {
+  factory PlaylistProfileModel.fromEntity(PlaylistProfile p) {
     return PlaylistProfileModel(
-      id: profile.id,
-      name: profile.name,
-      url: profile.url,
-      userId: profile.userId ?? 'local',
-      type: profile.type,
-      lastUsed: profile.lastUsed,
+      hiveId: p.id,
+      hiveName: p.name,
+      hiveUrl: p.url,
+      hiveType: p.type,
+      hiveLastUsed: p.lastUsed,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'url': url,
-      'userId': userId,
-      'type': type,
-      'lastUsed': lastUsed?.toIso8601String(),
-    };
+  Map<String, dynamic> toJson() => {
+        'id': hiveId,
+        'name': hiveName,
+        'url': hiveUrl,
+        'type': hiveType,
+        'lastUsed': hiveLastUsed?.toIso8601String(),
+      };
+
+  factory PlaylistProfileModel.fromJson(Map<String, dynamic> json) {
+    final lastUsedRaw = json['lastUsed'];
+    DateTime? lastUsed;
+    if (lastUsedRaw is String && lastUsedRaw.isNotEmpty) {
+      lastUsed = DateTime.tryParse(lastUsedRaw);
+    }
+
+    return PlaylistProfileModel(
+      hiveId: (json['id'] ?? '').toString(),
+      hiveName: (json['name'] ?? '').toString(),
+      hiveUrl: (json['url'] ?? '').toString(),
+      hiveType: json['type']?.toString(),
+      hiveLastUsed: lastUsed,
+    );
   }
 }

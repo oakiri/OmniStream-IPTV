@@ -1,4 +1,4 @@
-﻿import 'package:dartz/dartz.dart';
+import 'package:dartz/dartz.dart';
 import 'package:omnistream_iptv/core/error/failure.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 

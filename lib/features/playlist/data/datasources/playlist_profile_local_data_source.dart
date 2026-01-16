@@ -1,4 +1,4 @@
-﻿import 'package:hive/hive.dart';
+import 'package:hive/hive.dart';
 import '../models/playlist_profile_model.dart';
 
 abstract class PlaylistProfileLocalDataSource {
@@ -7,7 +7,8 @@ abstract class PlaylistProfileLocalDataSource {
   Future<void> deletePlaylistProfile(String id);
 }
 
-class PlaylistProfileLocalDataSourceImpl implements PlaylistProfileLocalDataSource {
+class PlaylistProfileLocalDataSourceImpl
+    implements PlaylistProfileLocalDataSource {
   final Box<PlaylistProfileModel> box;
 
   PlaylistProfileLocalDataSourceImpl({required this.box});

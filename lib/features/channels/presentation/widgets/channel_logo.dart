@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shimmer/shimmer.dart'; // Ya ten�as shimmer en tu pubspec, �us�moslo!
@@ -25,7 +25,7 @@ class ChannelLogo extends StatelessWidget {
     }
 
     final validUrl = url!;
-    
+
     // 2. Detectar si es un SVG (Vectorial)
     // Muchas listas IPTV usan .svg y esto es lo que rompe Image.network
     if (validUrl.toLowerCase().endsWith('.svg')) {
@@ -79,11 +79,7 @@ class ChannelLogo extends StatelessWidget {
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Icon(
-        Icons.tv, 
-        color: Colors.white24, 
-        size: width * 0.5
-      ),
+      child: Icon(Icons.tv, color: Colors.white24, size: width * 0.5),
     );
   }
 }

@@ -34,7 +34,8 @@ class FavoriteRemoteDataSourceImpl implements FavoriteRemoteDataSource {
   Future<List<FavoriteChannelModel>> getFavorites(String userId) async {
     final snapshot = await _favoritesCollection(userId).get();
     return snapshot.docs
-        .map((doc) => FavoriteChannelModel.fromJson(doc.data() as Map<String, dynamic>))
+        .map((doc) =>
+            FavoriteChannelModel.fromJson(doc.data() as Map<String, dynamic>))
         .toList();
   }
 }

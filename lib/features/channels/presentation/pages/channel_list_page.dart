@@ -12,7 +12,8 @@ import 'package:omnistream_iptv/features/channels/presentation/widgets/channel_l
 class ChannelListPage extends StatefulWidget {
   final String playlistUrl;
 
-  const ChannelListPage({Key? key, required this.playlistUrl}) : super(key: key);
+  const ChannelListPage({Key? key, required this.playlistUrl})
+      : super(key: key);
 
   @override
   State<ChannelListPage> createState() => _ChannelListPageState();
@@ -25,18 +26,29 @@ class _ChannelListPageState extends State<ChannelListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocProvider(
-        create: (context) => sl<ChannelBloc>()..add(LoadChannels(url: widget.playlistUrl, playlistId: widget.playlistUrl)),
+        create: (context) => sl<ChannelBloc>()
+          ..add(LoadChannels(
+              url: widget.playlistUrl, playlistId: widget.playlistUrl)),
         child: BlocBuilder<ChannelBloc, ChannelState>(
           builder: (context, state) {
             if (state is ChannelLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is ChannelLoaded) {
               // Usamos groupTitle (ajusta a 'group' si tu entidad Channel antigua lo usa)
-              final categories = ['All', ...state.channels.map((e) => e.groupTitle ?? 'Otros').toSet().toList()];
-              
+              final categories = [
+                'All',
+                ...state.channels
+                    .map((e) => e.groupTitle ?? 'Otros')
+                    .toSet()
+                    .toList()
+              ];
+
               final filteredChannels = _selectedCategory == 'All'
                   ? state.channels
-                  : state.channels.where((c) => (c.groupTitle ?? 'Otros') == _selectedCategory).toList();
+                  : state.channels
+                      .where(
+                          (c) => (c.groupTitle ?? 'Otros') == _selectedCategory)
+                      .toList();
 
               return CustomScrollView(
                 slivers: [
@@ -94,10 +106,14 @@ class _ChannelListPageState extends State<ChannelListPage> {
                           ),
                           subtitle: Text(
                             channel.groupTitle ?? 'Sin categoría',
-                            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                            style: TextStyle(
+                                color: Colors.grey[400], fontSize: 12),
                           ),
                           onTap: () {
-                            context.push("/player", extra: {"channel": channel, "channels": filteredChannels});
+                            context.push("/player", extra: {
+                              "channel": channel,
+                              "channels": filteredChannels
+                            });
                           },
                         );
                       },

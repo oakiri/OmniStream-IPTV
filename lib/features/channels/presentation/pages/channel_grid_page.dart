@@ -24,9 +24,9 @@ class ChannelGridPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              context.read<ChannelBloc>().add(
-                LoadChannels(url: playlistUrl, playlistId: playlistUrl)
-              );
+              context
+                  .read<ChannelBloc>()
+                  .add(LoadChannels(url: playlistUrl, playlistId: playlistUrl));
             },
           ),
         ],
@@ -35,19 +35,24 @@ class ChannelGridPage extends StatelessWidget {
         children: [
           // 1. BUSCADOR
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
             color: theme.scaffoldBackgroundColor,
             child: TextField(
               style: const TextStyle(color: Colors.white),
-              onChanged: (value) => context.read<ChannelBloc>().add(SearchChannels(value)),
+              onChanged: (value) =>
+                  context.read<ChannelBloc>().add(SearchChannels(value)),
               decoration: InputDecoration(
                 hintText: 'Buscar canal...',
                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
                 prefixIcon: const Icon(Icons.search, color: Colors.white70),
                 filled: true,
                 fillColor: theme.cardColor,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide.none),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide.none),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
               ),
             ),
           ),
@@ -66,21 +71,25 @@ class ChannelGridPage extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final category = state.categories[index];
                       final isSelected = category == state.selectedCategory;
-                      
+
                       return ChoiceChip(
                         label: Text(category),
                         selected: isSelected,
                         onSelected: (_) {
-                          context.read<ChannelBloc>().add(SelectCategory(category));
+                          context
+                              .read<ChannelBloc>()
+                              .add(SelectCategory(category));
                         },
-                        selectedColor: const Color(0xFF0D47A1), 
+                        selectedColor: const Color(0xFF0D47A1),
                         backgroundColor: theme.cardColor,
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.white : Colors.white70,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                         side: BorderSide.none,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
                       );
                     },
                   );
@@ -99,19 +108,23 @@ class ChannelGridPage extends StatelessWidget {
                 if (state is ChannelLoading) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state is ChannelError) {
-                  return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+                  return Center(
+                      child: Text(state.message,
+                          style: const TextStyle(color: Colors.red)));
                 } else if (state is ChannelLoaded) {
                   final channels = state.displayChannels;
 
                   if (channels.isEmpty) {
-                    return const Center(child: Text("No hay canales en esta categoría"));
+                    return const Center(
+                        child: Text("No hay canales en esta categoría"));
                   }
 
                   return GridView.builder(
                     // CAMBIO AQUÍ: Padding asimétrico.
                     // 12 arriba y lados, pero 100 abajo para salvar la barra de navegación.
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 100), 
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       childAspectRatio: 0.85,
                       crossAxisSpacing: 10,
@@ -124,7 +137,8 @@ class ChannelGridPage extends StatelessWidget {
                         elevation: 4,
                         color: theme.cardColor,
                         clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                         child: InkWell(
                           onTap: () {
                             context.pushNamed('player', extra: {
@@ -139,29 +153,38 @@ class ChannelGridPage extends StatelessWidget {
                               Expanded(
                                 flex: 3,
                                 child: Container(
-                                  color: const Color(0xFFCFD8DC), // Gris Plata Perfecto
+                                  color: const Color(
+                                      0xFFCFD8DC), // Gris Plata Perfecto
                                   padding: const EdgeInsets.all(8.0),
                                   child: CachedNetworkImage(
                                     imageUrl: channel.logoUrl ?? "",
                                     fit: BoxFit.contain,
-                                    placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                    errorWidget: (context, url, error) => const Icon(Icons.tv, size: 40, color: Colors.grey),
+                                    placeholder: (context, url) => const Center(
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2)),
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(Icons.tv,
+                                            size: 40, color: Colors.grey),
                                   ),
                                 ),
                               ),
-                              
+
                               // ZONA DE TEXTO
                               Container(
                                 height: 40,
                                 color: const Color(0xFF0D47A1),
-                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4.0),
                                 alignment: Alignment.center,
                                 child: Text(
                                   channel.name,
                                   maxLines: 2,
                                   textAlign: TextAlign.center,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],

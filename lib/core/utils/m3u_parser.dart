@@ -1,4 +1,4 @@
-﻿import 'package:uuid/uuid.dart';
+import 'package:uuid/uuid.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 class M3uParser {
@@ -19,16 +19,19 @@ class M3uParser {
         // Parsear metadatos básicos
         final attributes = line.substring(8);
         final parts = attributes.split(',');
-        
+
         if (parts.length > 1) {
           name = parts.last.trim();
         }
 
-        if (line.contains('tvg-logo="')) logoUrl = _extractAttribute(line, 'tvg-logo');
-        if (line.contains('group-title="')) group = _extractAttribute(line, 'group-title');
-        if (line.contains('tvg-id="')) tvgId = _extractAttribute(line, 'tvg-id');
-        if (line.contains('tvg-name="')) tvgName = _extractAttribute(line, 'tvg-name');
-
+        if (line.contains('tvg-logo="'))
+          logoUrl = _extractAttribute(line, 'tvg-logo');
+        if (line.contains('group-title="'))
+          group = _extractAttribute(line, 'group-title');
+        if (line.contains('tvg-id="'))
+          tvgId = _extractAttribute(line, 'tvg-id');
+        if (line.contains('tvg-name="'))
+          tvgName = _extractAttribute(line, 'tvg-name');
       } else if (line.isNotEmpty && !line.startsWith('#')) {
         if (name != null) {
           channels.add(Channel(
@@ -55,11 +58,11 @@ class M3uParser {
     final pattern = '$key="';
     final startIndex = line.indexOf(pattern);
     if (startIndex == -1) return null;
-    
+
     final start = startIndex + pattern.length;
     final end = line.indexOf('"', start);
     if (end == -1) return null;
-    
+
     return line.substring(start, end);
   }
 }

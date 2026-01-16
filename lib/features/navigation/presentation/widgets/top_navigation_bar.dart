@@ -30,9 +30,12 @@ class TopNavigationBar extends StatelessWidget {
                   return GestureDetector(
                     onTap: () => onItemSelected(index),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? Theme.of(context).colorScheme.secondary : Colors.transparent,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.secondary
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(

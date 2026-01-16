@@ -287,8 +287,7 @@ class _AddPlaylistDialogState extends State<AddPlaylistDialog>
       style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.3),
       obscureText: isPassword,
       maxLines: maxLines,
-      keyboardType:
-          maxLines > 1 ? TextInputType.multiline : TextInputType.text,
+      keyboardType: maxLines > 1 ? TextInputType.multiline : TextInputType.text,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white54),

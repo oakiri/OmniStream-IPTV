@@ -30,7 +30,9 @@ class ChannelRepositoryImpl implements ChannelRepository {
   }
 
   @override
-  Future<Either<Failure, void>> syncWithFirestore(String playlistId, List<Channel> channels, {Function(int, int)? onProgress}) async {
+  Future<Either<Failure, void>> syncWithFirestore(
+      String playlistId, List<Channel> channels,
+      {Function(int, int)? onProgress}) async {
     try {
       // Convertimos las entidades a modelos para Firebase
       final models = channels.map((c) => ChannelModel.fromEntity(c)).toList();
@@ -42,20 +44,23 @@ class ChannelRepositoryImpl implements ChannelRepository {
   }
 
   @override
-  Future<Either<Failure, List<Channel>>> getChannelsPaginated(String playlistId, {int limit = 50}) async {
+  Future<Either<Failure, List<Channel>>> getChannelsPaginated(String playlistId,
+      {int limit = 50}) async {
     // Implementación básica para cumplir el contrato (se desarrollará más adelante)
     try {
       final models = await firebaseDataSource.getChannels(playlistId);
       // Convertimos modelos a entidades
-      final entities = models.map((m) => Channel(
-        id: m.id,
-        name: m.name,
-        url: m.url,
-        logoUrl: m.logoUrl,
-        group: m.group,
-        tvgId: m.tvgId,
-        tvgName: m.tvgName,
-      )).toList();
+      final entities = models
+          .map((m) => Channel(
+                id: m.id,
+                name: m.name,
+                url: m.url,
+                logoUrl: m.logoUrl,
+                group: m.group,
+                tvgId: m.tvgId,
+                tvgName: m.tvgName,
+              ))
+          .toList();
       return Right(entities);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));

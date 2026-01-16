@@ -1,4 +1,4 @@
-﻿import 'package:equatable/equatable.dart';
+import 'package:equatable/equatable.dart';
 
 class Channel extends Equatable {
   final String id;
@@ -6,7 +6,7 @@ class Channel extends Equatable {
   final String? logoUrl;
   final String url;
   // Esta es la propiedad que el compilador no encontraba
-  final String? group; 
+  final String? group;
   final String? userAgent; // A�adido por si acaso lo usas luego
   // A�adimos tambi�n estas por si acaso las usas en otro sitio (opcional)
   final String? groupTitle;
@@ -26,5 +26,6 @@ class Channel extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, logoUrl, url, group, userAgent, groupTitle, tvgId, tvgName];
+  List<Object?> get props =>
+      [id, name, logoUrl, url, group, userAgent, groupTitle, tvgId, tvgName];
 }

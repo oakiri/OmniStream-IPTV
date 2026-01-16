@@ -1,4 +1,4 @@
-﻿import 'package:dartz/dartz.dart';
+import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:omnistream_iptv/core/error/failure.dart';
 import 'package:omnistream_iptv/features/playlist/data/datasources/favorite_remote_data_source.dart';
@@ -19,7 +19,8 @@ class FavoriteRepositoryImpl implements FavoriteRepository {
 
   @override
   Future<Either<Failure, void>> toggleFavorite(Channel channel) async {
-    if (_userId == null) return Left(ServerFailure(message: 'User not authenticated'));
+    if (_userId == null)
+      return Left(ServerFailure(message: 'User not authenticated'));
 
     try {
       final isFav = await isFavorite(channel.id);
@@ -49,7 +50,8 @@ class FavoriteRepositoryImpl implements FavoriteRepository {
 
   @override
   Future<Either<Failure, List<Channel>>> getFavorites() async {
-    if (_userId == null) return Left(ServerFailure(message: 'User not authenticated'));
+    if (_userId == null)
+      return Left(ServerFailure(message: 'User not authenticated'));
 
     try {
       final favorites = await remoteDataSource.getFavorites(_userId!);
@@ -61,7 +63,8 @@ class FavoriteRepositoryImpl implements FavoriteRepository {
 
   @override
   Future<Either<Failure, bool>> isFavorite(String channelId) async {
-    if (_userId == null) return Left(ServerFailure(message: 'User not authenticated'));
+    if (_userId == null)
+      return Left(ServerFailure(message: 'User not authenticated'));
 
     try {
       final favorites = await remoteDataSource.getFavorites(_userId!);

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,10 +24,10 @@ class _PlayerPageState extends State<PlayerPage> {
   // --- LISTA DE IDENTIDADES (User-Agents) ---
   // El reproductor probar� estas identidades en orden hasta que una funcione.
   final List<String> _userAgents = [
-    'IPTVSmartersPro',          // 1. El est�ndar m�s com�n en IPTV
+    'IPTVSmartersPro', // 1. El est�ndar m�s com�n en IPTV
     'VLC/3.0.0-git LibVLC/3.0.0-git', // 2. Simulamos ser VLC Player
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', // 3. Simulamos ser un navegador PC
-    'ExoPlayer/2.18.1',         // 4. Simulamos ser un Android TV nativo
+    'ExoPlayer/2.18.1', // 4. Simulamos ser un Android TV nativo
     'Dalvik/2.1.0 (Linux; U; Android 10; Mobile)', // 5. Android gen�rico
   ];
 
@@ -40,7 +40,7 @@ class _PlayerPageState extends State<PlayerPage> {
 
     // Iniciamos el proceso de carga autom�tico
     Future.microtask(() {
-      _initializePlayer(); 
+      _initializePlayer();
     });
   }
 
@@ -52,7 +52,8 @@ class _PlayerPageState extends State<PlayerPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No se pudo reproducir el canal. Servidor rechaza la conexi�n.'),
+            content: Text(
+                'No se pudo reproducir el canal. Servidor rechaza la conexi�n.'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 4),
           ),
@@ -65,7 +66,8 @@ class _PlayerPageState extends State<PlayerPage> {
     final currentUserAgent = _userAgents[retryIndex];
 
     try {
-      print('[PlayerPage] Intento #${retryIndex + 1} conectando como: "$currentUserAgent"');
+      print(
+          '[PlayerPage] Intento #${retryIndex + 1} conectando como: "$currentUserAgent"');
       print('[PlayerPage] URL: ${widget.channel.url}');
 
       // Configuramos los headers para "enga�ar" al servidor
@@ -83,20 +85,19 @@ class _PlayerPageState extends State<PlayerPage> {
       );
 
       // Si llegamos aqu� sin excepci�n, asumimos que conect�.
-      // (Nota: MediaKit a veces no lanza excepci�n inmediata en streams, 
+      // (Nota: MediaKit a veces no lanza excepci�n inmediata en streams,
       // pero si el video arranca, es un �xito).
       print('[PlayerPage] �Conexi�n aceptada con $currentUserAgent!');
-      
+
       if (mounted) {
         setState(() {
           _isPlaying = true;
         });
       }
-
     } catch (e) {
       print('[PlayerPage] Fall� con $currentUserAgent. Error: $e');
       print('[PlayerPage] Reintentando con la siguiente identidad...');
-      
+
       // RECURSIVIDAD: Llamamos a la misma funci�n pero con el siguiente �ndice
       await _initializePlayer(retryIndex + 1);
     }

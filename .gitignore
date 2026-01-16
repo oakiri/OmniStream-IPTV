@@ -105,3 +105,9 @@ coverage/
 .vs/
 .vs
 **/*.vsidx
+
+# Patchwork / backup files (local)
+_patchwork/
+**/*.dart_old
+**/*_old.dart
+**/*.patch

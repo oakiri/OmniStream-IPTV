@@ -20,5 +20,6 @@ class Channel extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, url, logoUrl, groupTitle, tvgId, tvgName];
+  List<Object?> get props =>
+      [id, name, url, logoUrl, groupTitle, tvgId, tvgName];
 }

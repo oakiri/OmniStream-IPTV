@@ -1,6 +1,5 @@
 part of 'playlist_profile_bloc.dart';
 
-
 abstract class PlaylistProfileState extends Equatable {
   const PlaylistProfileState();
 

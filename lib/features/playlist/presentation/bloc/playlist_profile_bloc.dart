@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 // IMPORTANTE: Esta línea faltaba para que reconozca "Failure"
-import 'package:omnistream_iptv/core/error/failure.dart'; 
+import 'package:omnistream_iptv/core/error/failure.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist_profiles.dart';
 import 'package:omnistream_iptv/features/playlist/domain/usecases/add_playlist_profile.dart';
@@ -11,7 +11,8 @@ import 'package:omnistream_iptv/core/usecases/no_params.dart';
 part 'playlist_profile_event.dart';
 part 'playlist_profile_state.dart';
 
-class PlaylistProfileBloc extends Bloc<PlaylistProfileEvent, PlaylistProfileState> {
+class PlaylistProfileBloc
+    extends Bloc<PlaylistProfileEvent, PlaylistProfileState> {
   final GetPlaylistProfiles getPlaylistProfiles;
   final AddPlaylistProfile addPlaylistProfile;
   final DeletePlaylistProfile deletePlaylistProfile;
@@ -33,7 +34,8 @@ class PlaylistProfileBloc extends Bloc<PlaylistProfileEvent, PlaylistProfileStat
     emit(PlaylistProfileLoading());
     final failureOrProfiles = await getPlaylistProfiles(NoParams());
     failureOrProfiles.fold(
-      (failure) => emit(PlaylistProfileError(message: _mapFailureToMessage(failure))),
+      (failure) =>
+          emit(PlaylistProfileError(message: _mapFailureToMessage(failure))),
       (profiles) => emit(PlaylistProfileLoaded(profiles: profiles)),
     );
   }
@@ -45,8 +47,9 @@ class PlaylistProfileBloc extends Bloc<PlaylistProfileEvent, PlaylistProfileStat
     emit(PlaylistProfileLoading());
     final failureOrSuccess = await addPlaylistProfile(event.profile);
     failureOrSuccess.fold(
-      (failure) => emit(PlaylistProfileError(message: _mapFailureToMessage(failure))),
-      (_) => add(LoadPlaylistProfiles()), 
+      (failure) =>
+          emit(PlaylistProfileError(message: _mapFailureToMessage(failure))),
+      (_) => add(LoadPlaylistProfiles()),
     );
   }
 
@@ -57,14 +60,15 @@ class PlaylistProfileBloc extends Bloc<PlaylistProfileEvent, PlaylistProfileStat
     emit(PlaylistProfileLoading());
     final failureOrSuccess = await deletePlaylistProfile(event.id);
     failureOrSuccess.fold(
-      (failure) => emit(PlaylistProfileError(message: _mapFailureToMessage(failure))),
+      (failure) =>
+          emit(PlaylistProfileError(message: _mapFailureToMessage(failure))),
       (_) => add(LoadPlaylistProfiles()),
     );
   }
 
   String _mapFailureToMessage(dynamic failure) {
     if (failure is Failure) {
-      return failure.message; 
+      return failure.message;
     }
     return "Error: ${failure.toString()}";
   }

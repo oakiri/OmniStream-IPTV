@@ -36,7 +36,8 @@ class _ToggleFavoriteButtonState extends State<ToggleFavoriteButton> {
     result.fold(
       (failure) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error toggling favorite: ${failure.message}')),
+          SnackBar(
+              content: Text('Error toggling favorite: ${failure.message}')),
         );
       },
       (_) {
@@ -44,7 +45,10 @@ class _ToggleFavoriteButtonState extends State<ToggleFavoriteButton> {
           _isFavorite = !_isFavorite;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_isFavorite ? 'Added to favorites' : 'Removed from favorites')),
+          SnackBar(
+              content: Text(_isFavorite
+                  ? 'Added to favorites'
+                  : 'Removed from favorites')),
         );
       },
     );

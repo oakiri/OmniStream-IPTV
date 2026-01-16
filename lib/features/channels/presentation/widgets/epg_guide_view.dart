@@ -27,7 +27,7 @@ class _EpgGuideViewState extends State<EpgGuideView> {
   void initState() {
     super.initState();
     _filteredChannels = widget.channels;
-    
+
     // Auto-scroll al canal actual tras renderizar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentChannel();
@@ -35,17 +35,19 @@ class _EpgGuideViewState extends State<EpgGuideView> {
   }
 
   void _scrollToCurrentChannel() {
-    final index = _filteredChannels.indexWhere((c) => c.id == widget.currentChannel.id);
+    final index =
+        _filteredChannels.indexWhere((c) => c.id == widget.currentChannel.id);
     if (index != -1 && _verticalController.hasClients) {
       // 60 es la altura aproximada de cada fila
-      _verticalController.jumpTo((index * 80.0) - 100); 
+      _verticalController.jumpTo((index * 80.0) - 100);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF101010).withOpacity(0.95), // Fondo oscuro semi-transparente
+      color: const Color(0xFF101010)
+          .withOpacity(0.95), // Fondo oscuro semi-transparente
       child: SafeArea(
         child: Column(
           children: [
@@ -64,7 +66,8 @@ class _EpgGuideViewState extends State<EpgGuideView> {
                       itemCount: _filteredChannels.length,
                       itemBuilder: (context, index) {
                         final channel = _filteredChannels[index];
-                        final isSelected = channel.id == widget.currentChannel.id;
+                        final isSelected =
+                            channel.id == widget.currentChannel.id;
                         return _buildChannelCell(channel, isSelected);
                       },
                     ),
@@ -78,8 +81,10 @@ class _EpgGuideViewState extends State<EpgGuideView> {
                       child: SizedBox(
                         width: 1000, // Ancho virtual de la línea de tiempo
                         child: ListView.builder(
-                          controller: _verticalController, // Scroll sincronizado verticalmente
-                          physics: const NeverScrollableScrollPhysics(), // Solo se mueve con la lista de canales
+                          controller:
+                              _verticalController, // Scroll sincronizado verticalmente
+                          physics:
+                              const NeverScrollableScrollPhysics(), // Solo se mueve con la lista de canales
                           itemCount: _filteredChannels.length,
                           itemBuilder: (context, index) {
                             return _buildTimelineRow();
@@ -100,7 +105,7 @@ class _EpgGuideViewState extends State<EpgGuideView> {
   Widget _buildHeader() {
     final now = DateTime.now();
     final timeFormat = DateFormat('HH:mm');
-    
+
     return Container(
       height: 60,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -114,12 +119,20 @@ class _EpgGuideViewState extends State<EpgGuideView> {
             children: [
               const Icon(Icons.dvr, color: Colors.blueAccent),
               const SizedBox(width: 10),
-              const Text("Guía de TV", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text("Guía de TV",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold)),
               const SizedBox(width: 20),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)),
-                child: Text(DateFormat('EEE, d MMM').format(now), style: const TextStyle(color: Colors.white70)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(20)),
+                child: Text(DateFormat('EEE, d MMM').format(now),
+                    style: const TextStyle(color: Colors.white70)),
               )
             ],
           ),
@@ -142,19 +155,28 @@ class _EpgGuideViewState extends State<EpgGuideView> {
         height: 80,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blueAccent.withOpacity(0.2) : Colors.transparent,
-          border: const Border(bottom: BorderSide(color: Colors.white12), right: BorderSide(color: Colors.white12)),
+          color: isSelected
+              ? Colors.blueAccent.withOpacity(0.2)
+              : Colors.transparent,
+          border: const Border(
+              bottom: BorderSide(color: Colors.white12),
+              right: BorderSide(color: Colors.white12)),
         ),
         child: Row(
           children: [
             // Logo
             Container(
-              width: 50, height: 50,
+              width: 50,
+              height: 50,
               margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(8)),
-              child: channel.logoUrl != null 
-                ? Image.network(channel.logoUrl!, errorBuilder: (c,e,s) => const Icon(Icons.tv, color: Colors.white54))
-                : const Icon(Icons.tv, color: Colors.white54),
+              decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(8)),
+              child: channel.logoUrl != null
+                  ? Image.network(channel.logoUrl!,
+                      errorBuilder: (c, e, s) =>
+                          const Icon(Icons.tv, color: Colors.white54))
+                  : const Icon(Icons.tv, color: Colors.white54),
             ),
             // Nombre
             Expanded(
@@ -168,7 +190,9 @@ class _EpgGuideViewState extends State<EpgGuideView> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (isSelected) const Icon(Icons.play_circle_fill, color: Colors.blueAccent, size: 20),
+            if (isSelected)
+              const Icon(Icons.play_circle_fill,
+                  color: Colors.blueAccent, size: 20),
           ],
         ),
       ),
@@ -199,8 +223,11 @@ class _EpgGuideViewState extends State<EpgGuideView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Programación en Vivo", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  Text("Sin información EPG detallada", style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text("Programación en Vivo",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                  Text("Sin información EPG detallada",
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
                 ],
               ),
             ),
@@ -215,7 +242,9 @@ class _EpgGuideViewState extends State<EpgGuideView> {
                 color: Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Center(child: Text("Siguiente programa...", style: TextStyle(color: Colors.white38))),
+              child: const Center(
+                  child: Text("Siguiente programa...",
+                      style: TextStyle(color: Colors.white38))),
             ),
           ),
         ],

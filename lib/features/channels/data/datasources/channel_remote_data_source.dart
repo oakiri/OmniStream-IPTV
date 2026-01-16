@@ -23,12 +23,13 @@ class ChannelRemoteDataSourceImpl implements ChannelRemoteDataSource {
         'Accept': '*/*',
         'Connection': 'keep-alive',
       };
-      
-      final response = await client.get(uri, headers: headers)
+
+      final response = await client
+          .get(uri, headers: headers)
           .timeout(const Duration(seconds: 10)); // Timeout de seguridad
 
       debugPrint('📡 Respuesta 1 - Status Code: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) return response.body;
       }
@@ -42,16 +43,18 @@ class ChannelRemoteDataSourceImpl implements ChannelRemoteDataSource {
     try {
       debugPrint('🔄 Intentando conectar (Modo Navegador): $url');
       final headersBrowser = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       };
 
-      final response = await client.get(uri, headers: headersBrowser)
+      final response = await client
+          .get(uri, headers: headersBrowser)
           .timeout(const Duration(seconds: 10));
 
       debugPrint('📡 Respuesta 2 - Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-         return response.body;
+        return response.body;
       }
     } catch (e) {
       debugPrint('⚠️ Falló Intento 2: $e');
@@ -60,9 +63,9 @@ class ChannelRemoteDataSourceImpl implements ChannelRemoteDataSource {
     // INTENTO 3: Sin headers (Crudo) - Último recurso
     try {
       debugPrint('🔄 Intentando conectar (Sin Headers)...');
-      final response = await client.get(uri)
-          .timeout(const Duration(seconds: 10));
-      
+      final response =
+          await client.get(uri).timeout(const Duration(seconds: 10));
+
       debugPrint('📡 Respuesta 3 - Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {

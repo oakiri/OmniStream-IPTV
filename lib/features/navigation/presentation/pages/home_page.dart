@@ -23,7 +23,9 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _channelBloc = sl<ChannelBloc>()..add(LoadChannels(url: widget.playlistUrl, playlistId: widget.playlistUrl));
+    _channelBloc = sl<ChannelBloc>()
+      ..add(LoadChannels(
+          url: widget.playlistUrl, playlistId: widget.playlistUrl));
   }
 
   @override

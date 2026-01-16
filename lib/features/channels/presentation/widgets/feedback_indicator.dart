@@ -1,11 +1,11 @@
-
 import 'package:flutter/material.dart';
 
 class FeedbackIndicator extends StatelessWidget {
   final IconData icon;
   final double value;
 
-  const FeedbackIndicator({Key? key, required this.icon, required this.value}) : super(key: key);
+  const FeedbackIndicator({Key? key, required this.icon, required this.value})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
-import 'package:omnistream_iptv/injection_container.dart';
-import '../widgets/add_playlist_dialog.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_profile_bloc.dart';
 
 class PlaylistDashboardPage extends StatefulWidget {
   const PlaylistDashboardPage({super.key});
@@ -14,191 +9,301 @@ class PlaylistDashboardPage extends StatefulWidget {
 }
 
 class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
-  late PlaylistProfileBloc _profileBloc;
+  // ⚠️ Temporal: lista mock para que el dashboard funcione aunque todavía
+  // estés arreglando Hive/Repo/Bloc. Luego lo conectamos al Bloc.
+  final List<_PlaylistItem> _items = const [
+    _PlaylistItem(
+      id: 'demo-1',
+      name: 'Demo Playlist',
+      url: 'https://example.com/playlist.m3u',
+      type: 'm3u',
+    ),
+  ];
 
   @override
-  void initState() {
-    super.initState();
-    _profileBloc = sl<PlaylistProfileBloc>();
-    _profileBloc.add(LoadPlaylistProfiles());
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0F14),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0B0F14),
+        elevation: 0,
+        title: const Text('Playlists'),
+        actions: [
+          IconButton(
+            tooltip: 'Añadir',
+            icon: const Icon(Icons.add),
+            onPressed: _showAddDialog,
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: _items.isEmpty
+            ? _EmptyState(onAdd: _showAddDialog)
+            : ListView.separated(
+                itemCount: _items.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final item = _items[index];
+                  return _PlaylistCard(
+                    item: item,
+                    onOpen: () {
+                      // ✅ Navega al listado de canales pasando playlistUrl
+                      context.goNamed(
+                        'playlist_home',
+                        extra: item.url,
+                      );
+                    },
+                    onMore: () => _showMoreSheet(item),
+                  );
+                },
+              ),
+      ),
+    );
   }
 
-  void _showAddPlaylistDialog() {
-    showDialog(
+  void _showAddDialog() {
+    // Por ahora: diálogo simple (sin repo/bloc).
+    // Cuando arreglemos DI/Bloc, aquí conectamos tu AddPlaylistDialog real.
+    showDialog<void>(
       context: context,
-      barrierDismissible: false, // Obliga a usar botones para cerrar
-      builder: (context) {
-        return BlocProvider<PlaylistProfileBloc>.value(
-          value: _profileBloc,
-          child: const AddPlaylistDialog(),
+      builder: (ctx) {
+        final nameCtrl = TextEditingController();
+        final urlCtrl = TextEditingController();
+        final typeCtrl = TextEditingController(text: 'm3u');
+
+        return AlertDialog(
+          title: const Text('Añadir playlist'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Nombre'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: urlCtrl,
+                decoration: const InputDecoration(labelText: 'URL'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: typeCtrl,
+                decoration:
+                    const InputDecoration(labelText: 'Tipo (m3u/xtream)'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Aquí luego dispararemos Bloc/AddPlaylistProfile usecase.
+                Navigator.pop(ctx);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
         );
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text('Mis Listas', 
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+  void _showMoreSheet(_PlaylistItem item) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF121826),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
-      body: BlocProvider.value(
-        value: _profileBloc,
-        child: BlocBuilder<PlaylistProfileBloc, PlaylistProfileState>(
-          builder: (context, state) {
-            if (state is PlaylistProfileLoading) {
-              return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));
-            } else if (state is PlaylistProfileLoaded) {
-              return _buildGrid(state.profiles);
-            } else if (state is PlaylistProfileError) {
-              return Center(child: Text('Error: ${state.message}', style: const TextStyle(color: Colors.red)));
-            }
-            return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.white)));
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blueAccent,
-        onPressed: _showAddPlaylistDialog,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-    );
-  }
-
-  Widget _buildGrid(List<PlaylistProfile> profiles) {
-    if (profiles.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.playlist_add, size: 80, color: Colors.grey[700]),
-            const SizedBox(height: 20),
-            const Text('No hay listas.\nAñade una pulsando +', 
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 18)
-            ),
-          ],
-        ),
-      );
-    }
-    
-    // Usamos LayoutBuilder para adaptar el Grid si es tablet o móvil
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Si es muy ancho (tablet/TV), ponemos 3 columnas, si no 2
-        int crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
-        
-        return GridView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 20, 
-            mainAxisSpacing: 20, 
-            childAspectRatio: 0.8, // Tarjetas más altas para que quepa el botón
-          ),
-          itemCount: profiles.length,
-          itemBuilder: (context, index) {
-            final profile = profiles[index];
-            return _buildProfileCard(profile);
-          },
-        );
-      }
-    );
-  }
-
-  Widget _buildProfileCard(PlaylistProfile profile) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A), // Gris oscuro elegante
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white10), // Borde sutil
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 5)),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Contenido Principal
-          Padding(
-            padding: const EdgeInsets.all(12.0),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Spacer(),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  width: 44,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent.withOpacity(0.1),
-                    shape: BoxShape.circle,
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Icon(Icons.tv, size: 40, color: Colors.blueAccent),
                 ),
-                const SizedBox(height: 15),
-                Text(
-                  profile.name,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 14),
+                ListTile(
+                  leading: const Icon(Icons.play_arrow, color: Colors.white),
+                  title: const Text('Abrir',
+                      style: TextStyle(color: Colors.white)),
+                  subtitle: Text(item.url,
+                      style: const TextStyle(color: Colors.white54)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    context.goNamed('playlist_home', extra: item.url);
+                  },
                 ),
-                const Spacer(),
-                
-                // BOTÓN ENTRAR EXPLÍCITO
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: () => context.pushNamed('playlist_home', extra: profile.url),
-                    child: const Text('ENTRAR', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
+                const Divider(color: Colors.white12),
+                ListTile(
+                  leading:
+                      const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  title: const Text('Eliminar',
+                      style: TextStyle(color: Colors.redAccent)),
+                  onTap: () {
+                    // Aquí luego conectamos DeletePlaylistProfile
+                    Navigator.pop(ctx);
+                  },
                 ),
               ],
             ),
           ),
-          
-          // Botón Borrar (Esquina superior derecha)
-          Positioned(
-            top: 0,
-            right: 0,
-            child: IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-              onPressed: () => _showDeleteConfirm(profile),
+        );
+      },
+    );
+  }
+}
+
+class _PlaylistItem {
+  final String id;
+  final String name;
+  final String url;
+  final String? type;
+
+  const _PlaylistItem({
+    required this.id,
+    required this.name,
+    required this.url,
+    this.type,
+  });
+}
+
+class _PlaylistCard extends StatelessWidget {
+  final _PlaylistItem item;
+  final VoidCallback onOpen;
+  final VoidCallback onMore;
+
+  const _PlaylistCard({
+    required this.item,
+    required this.onOpen,
+    required this.onMore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onOpen,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF121826),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.playlist_play, color: Colors.white),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.url,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white54),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (item.type != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  item.type!,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ),
+            IconButton(
+              onPressed: onMore,
+              icon: const Icon(Icons.more_vert, color: Colors.white70),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  void _showDeleteConfirm(PlaylistProfile profile) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text('¿Eliminar lista?', style: TextStyle(color: Colors.white)),
-        content: Text('Vas a eliminar "${profile.name}".', style: const TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx), 
-            child: const Text('CANCELAR', style: TextStyle(color: Colors.grey))
-          ),
-          TextButton(
-            onPressed: () {
-              _profileBloc.add(DeleteProfileEvent(profile.id));
-              Navigator.pop(ctx);
-            }, 
-            child: const Text('ELIMINAR', style: TextStyle(color: Colors.redAccent))
-          ),
-        ],
+class _EmptyState extends StatelessWidget {
+  final VoidCallback onAdd;
+
+  const _EmptyState({required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        constraints: const BoxConstraints(maxWidth: 420),
+        decoration: BoxDecoration(
+          color: const Color(0xFF121826),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.playlist_add, size: 44, color: Colors.white),
+            const SizedBox(height: 10),
+            const Text(
+              'Aún no tienes playlists',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Añade una URL M3U o Xtream para empezar.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white54),
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+              label: const Text('Añadir playlist'),
+            ),
+          ],
+        ),
       ),
     );
   }

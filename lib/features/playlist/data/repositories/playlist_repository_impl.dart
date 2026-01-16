@@ -20,20 +20,22 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   Future<Either<Failure, List<Channel>>> getChannels(String url) async {
     try {
       final response = await http.get(Uri.parse(url));
-      
+
       if (response.statusCode == 200) {
         final channels = M3uParser.parse(response.body);
-        
-        final channelModels = channels.map((c) => ChannelModel(
-          id: c.id,
-          name: c.name,
-          url: c.url,
-          logoUrl: c.logoUrl,
-          group: c.group,
-        )).toList();
-        
+
+        final channelModels = channels
+            .map((c) => ChannelModel(
+                  id: c.id,
+                  name: c.name,
+                  url: c.url,
+                  logoUrl: c.logoUrl,
+                  group: c.group,
+                ))
+            .toList();
+
         await localDataSource.cacheChannels(channelModels);
-        
+
         return Right(channels);
       } else {
         return Left(ServerFailure(message: 'Error ${response.statusCode}'));
