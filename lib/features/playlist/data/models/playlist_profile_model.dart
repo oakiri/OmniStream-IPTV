@@ -20,7 +20,7 @@ class PlaylistProfileModel extends PlaylistProfile with HiveObjectMixin {
   @HiveField(4)
   final DateTime? hiveLastUsed;
 
-  const PlaylistProfileModel({
+  PlaylistProfileModel({
     required this.hiveId,
     required this.hiveName,
     required this.hiveUrl,
