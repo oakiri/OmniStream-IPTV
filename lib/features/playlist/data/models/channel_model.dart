@@ -1,8 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
-part 'channel_model.g.dart';
-
 @HiveType(typeId: 0)
 class ChannelModel extends Channel {
   @HiveField(0)
@@ -67,5 +65,46 @@ class ChannelModel extends Channel {
       'url': url,
       'group': group,
     };
+  }
+}
+
+/// NOTE: This project previously relied on build_runner-generated `*.g.dart`
+/// files for Hive adapters. To keep `flutter analyze` green even when codegen
+/// hasn't been run, we provide a manual adapter implementation.
+class ChannelModelAdapter extends TypeAdapter<ChannelModel> {
+  @override
+  final int typeId = 1;
+
+  @override
+  ChannelModel read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{};
+    for (var i = 0; i < numOfFields; i++) {
+      final fieldKey = reader.readByte();
+      fields[fieldKey] = reader.read();
+    }
+    return ChannelModel(
+      id: (fields[0] as String?) ?? '',
+      name: (fields[1] as String?) ?? 'Sin Nombre',
+      logoUrl: fields[2] as String?,
+      url: (fields[3] as String?) ?? '',
+      group: fields[4] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, ChannelModel obj) {
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.name)
+      ..writeByte(2)
+      ..write(obj.logoUrl)
+      ..writeByte(3)
+      ..write(obj.url)
+      ..writeByte(4)
+      ..write(obj.group);
   }
 }

@@ -31,19 +31,13 @@ class FavoriteChannelModel extends Channel {
   final String userId;
 
   const FavoriteChannelModel({
-    required this.id,
-    required this.name,
-    this.logoUrl,
-    required this.url,
-    this.group,
+    required super.id,
+    required super.name,
+    super.logoUrl,
+    required super.url,
+    super.group,
     required this.userId,
-  }) : super(
-          id: id,
-          name: name,
-          logoUrl: logoUrl,
-          url: url,
-          group: group,
-        );
+  });
 
   factory FavoriteChannelModel.fromJson(Map<String, dynamic> json) =>
       _$FavoriteChannelModelFromJson(json);
