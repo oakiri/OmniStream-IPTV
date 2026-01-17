@@ -162,7 +162,7 @@ Future<void> init() async {
 
   // PLAYLIST
   sl.registerLazySingleton(() => GetPlaylist(sl<PlaylistRepository>()));
-  sl.registerLazySingleton(() => ToggleFavorite(sl<FavoriteRepository>()));
+  sl.registerLazySingleton(() => ToggleFavorite(repository: sl<FavoriteRepository>()));
 
   sl.registerLazySingleton(
     () => GetPlaylistProfiles(sl<PlaylistProfileRepository>()),

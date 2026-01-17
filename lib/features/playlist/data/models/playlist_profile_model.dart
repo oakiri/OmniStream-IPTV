@@ -1,7 +1,6 @@
 import 'package:hive/hive.dart';
-import '../../domain/entities/playlist_profile.dart';
 
-part 'playlist_profile_model.g.dart';
+import '../../domain/entities/playlist_profile.dart';
 
 @HiveType(typeId: 1)
 class PlaylistProfileModel extends PlaylistProfile with HiveObjectMixin {
@@ -68,5 +67,42 @@ class PlaylistProfileModel extends PlaylistProfile with HiveObjectMixin {
       hiveType: json['type']?.toString(),
       hiveLastUsed: lastUsed,
     );
+  }
+}
+
+/// Adapter manual para evitar depender de archivos generados (*.g.dart).
+class PlaylistProfileModelAdapter extends TypeAdapter<PlaylistProfileModel> {
+  @override
+  final int typeId = 1;
+
+  @override
+  PlaylistProfileModel read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return PlaylistProfileModel(
+      hiveId: fields[0] as String,
+      hiveName: fields[1] as String,
+      hiveUrl: fields[2] as String,
+      hiveType: fields[3] as String?,
+      hiveLastUsed: fields[4] as DateTime?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, PlaylistProfileModel obj) {
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.hiveId)
+      ..writeByte(1)
+      ..write(obj.hiveName)
+      ..writeByte(2)
+      ..write(obj.hiveUrl)
+      ..writeByte(3)
+      ..write(obj.hiveType)
+      ..writeByte(4)
+      ..write(obj.hiveLastUsed);
   }
 }

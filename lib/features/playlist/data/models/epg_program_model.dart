@@ -1,9 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:equatable/equatable.dart';
 
-part 'epg_program_model.g.dart';
-
-@HiveType(typeId: 2)
+@HiveType(typeId: 12)
 class EPGProgramModel extends Equatable {
   @HiveField(0)
   final String channelId;
@@ -30,4 +28,41 @@ class EPGProgramModel extends Equatable {
 
   @override
   List<Object?> get props => [channelId, title, description, start, end];
+}
+
+/// Adapter manual para evitar depender de archivos generados (*.g.dart).
+class EPGProgramModelAdapter extends TypeAdapter<EPGProgramModel> {
+  @override
+  final int typeId = 12;
+
+  @override
+  EPGProgramModel read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return EPGProgramModel(
+      channelId: fields[0] as String,
+      title: fields[1] as String,
+      description: fields[2] as String?,
+      start: fields[3] as DateTime,
+      end: fields[4] as DateTime,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, EPGProgramModel obj) {
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.channelId)
+      ..writeByte(1)
+      ..write(obj.title)
+      ..writeByte(2)
+      ..write(obj.description)
+      ..writeByte(3)
+      ..write(obj.start)
+      ..writeByte(4)
+      ..write(obj.end);
+  }
 }

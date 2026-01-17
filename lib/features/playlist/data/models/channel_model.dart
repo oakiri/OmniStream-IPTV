@@ -1,9 +1,8 @@
 import 'package:hive/hive.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
-part 'channel_model.g.dart';
+import '../../domain/entities/channel.dart';
 
-@HiveType(typeId: 0)
+@HiveType(typeId: 11)
 class ChannelModel extends Channel {
   @HiveField(0)
   final String id;
@@ -67,5 +66,42 @@ class ChannelModel extends Channel {
       'url': url,
       'group': group,
     };
+  }
+}
+
+/// Adapter manual para evitar depender de archivos generados (*.g.dart).
+class ChannelModelAdapter extends TypeAdapter<ChannelModel> {
+  @override
+  final int typeId = 11;
+
+  @override
+  ChannelModel read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return ChannelModel(
+      id: fields[0] as String,
+      name: fields[1] as String,
+      logoUrl: fields[2] as String?,
+      url: fields[3] as String,
+      group: fields[4] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, ChannelModel obj) {
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.name)
+      ..writeByte(2)
+      ..write(obj.logoUrl)
+      ..writeByte(3)
+      ..write(obj.url)
+      ..writeByte(4)
+      ..write(obj.group);
   }
 }
