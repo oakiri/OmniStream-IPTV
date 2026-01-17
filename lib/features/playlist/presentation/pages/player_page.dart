@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:omnistream_iptv/core/theme/cinematic_theme.dart';
+import 'package:omnistream_iptv/core/widgets/cinematic_glass_card.dart';
+import 'package:omnistream_iptv/core/widgets/cinematic_platform_badges.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 class PlayerPage extends StatefulWidget {
@@ -124,35 +127,69 @@ class _PlayerPageState extends State<PlayerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.channel.name,
-          style: GoogleFonts.roboto(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.deepPurple,
-        elevation: 0,
-      ),
-      body: Column(
+      backgroundColor: Colors.black,
+      body: Stack(
         children: [
-          Expanded(
+          Positioned.fill(
             child: Container(
               color: Colors.black,
               child: Video(controller: videoController),
             ),
           ),
-          _buildPlayerControls(),
-          _buildChannelInfo(),
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: CinematicGlassCard(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.arrow_back_ios_new,
+                              color: CinematicColors.textPrimary),
+                        ),
+                        Expanded(
+                          child: Text(
+                            widget.channel.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.roboto(
+                              fontSize: 18,
+                              color: CinematicColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.cast,
+                            color: CinematicColors.textMuted),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Column(
+                    children: [
+                      _buildPlayerControls(),
+                      const SizedBox(height: 10),
+                      _buildChannelInfo(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildPlayerControls() {
-    return Container(
-      color: Colors.grey[900],
+    return CinematicGlassCard(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -182,35 +219,44 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   Widget _buildChannelInfo() {
-    return Container(
-      color: Colors.grey[100],
+    return CinematicGlassCard(
       padding: const EdgeInsets.all(16),
-      width: double.infinity, // Asegura que ocupe todo el ancho
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Informaci�n del Canal',
+            'Información del Canal',
             style: GoogleFonts.roboto(
               fontSize: 14,
               fontWeight: FontWeight.bold,
+              color: CinematicColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Nombre: ${widget.channel.name}',
-            style: GoogleFonts.roboto(fontSize: 12),
+            style: GoogleFonts.roboto(
+              fontSize: 12,
+              color: CinematicColors.textMuted,
+            ),
           ),
           if (widget.channel.group != null)
             Text(
-              'Categor�a: ${widget.channel.group}',
-              style: GoogleFonts.roboto(fontSize: 12),
+              'Categoría: ${widget.channel.group}',
+              style: GoogleFonts.roboto(
+                fontSize: 12,
+                color: CinematicColors.textMuted,
+              ),
             ),
-          const SizedBox(height: 4),
-          // Mostramos la URL cortada para depuraci�n visual
+          const SizedBox(height: 8),
+          CinematicPlatformBadges.placeholder(),
+          const SizedBox(height: 8),
           Text(
             'Stream: ${widget.channel.url}',
-            style: GoogleFonts.roboto(fontSize: 10, color: Colors.grey),
+            style: GoogleFonts.roboto(
+              fontSize: 10,
+              color: CinematicColors.textMuted,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

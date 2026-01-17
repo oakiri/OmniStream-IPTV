@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:omnistream_iptv/core/theme/cinematic_theme.dart';
+import 'package:omnistream_iptv/core/widgets/cinematic_glass_card.dart';
+import 'package:omnistream_iptv/core/widgets/cinematic_platform_badges.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 // Imports para la Guía EPG y los nuevos controles de gestos
@@ -256,54 +259,60 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E).withOpacity(0.95),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: Colors.grey, borderRadius: BorderRadius.circular(2)),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: Text("Ajustes",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold)),
-              ),
-              ListTile(
-                leading: const Icon(Icons.audiotrack, color: Colors.blueAccent),
-                title:
-                    const Text("Audio", style: TextStyle(color: Colors.white)),
-                trailing: Text(audioLabel,
-                    style: const TextStyle(color: Colors.white54)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showTrackSelection("audio");
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.subtitles, color: Colors.blueAccent),
-                title: const Text("Subtítulos",
-                    style: TextStyle(color: Colors.white)),
-                trailing: Text(subLabel,
-                    style: const TextStyle(color: Colors.white54)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showTrackSelection("subtitle");
-                },
-              ),
-              const SizedBox(height: 20),
-            ],
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: CinematicGlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(20)),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.white30,
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: Text("Ajustes",
+                      style: TextStyle(
+                          color: CinematicColors.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold)),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.audiotrack,
+                      color: CinematicColors.accentSoft),
+                  title: const Text("Audio",
+                      style: TextStyle(color: CinematicColors.textPrimary)),
+                  trailing: Text(audioLabel,
+                      style: const TextStyle(color: CinematicColors.textMuted)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showTrackSelection("audio");
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.subtitles,
+                      color: CinematicColors.accentSoft),
+                  title: const Text("Subtítulos",
+                      style: TextStyle(color: CinematicColors.textPrimary)),
+                  trailing: Text(subLabel,
+                      style: const TextStyle(color: CinematicColors.textMuted)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showTrackSelection("subtitle");
+                  },
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
         ),
       ),
@@ -321,43 +330,41 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        constraints:
-            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E).withOpacity(0.95),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text("Seleccionar ${isAudio ? 'Audio' : 'Subtítulo'}",
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: CinematicGlassCard(
+          padding: const EdgeInsets.all(16),
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(20)),
+          child: Column(
+            children: [
+              Text("Seleccionar ${isAudio ? 'Audio' : 'Subtítulo'}",
                   style: const TextStyle(
-                      color: Colors.white,
+                      color: CinematicColors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold)),
-            ),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildTrackTile(ctx, type, "auto", "Auto (Por defecto)",
-                      currentSavedId == 'auto'),
-                  _buildTrackTile(
-                      ctx, type, "no", "Desactivado", currentSavedId == 'no'),
-                  const Divider(color: Colors.white24),
-                  ...tracks.map((track) {
-                    final label = track.language ??
-                        track.title ??
-                        track.id ??
-                        "Desconocido";
-                    return _buildTrackTile(ctx, type, track.id ?? "", label,
-                        currentSavedId == track.id);
-                  }).toList(),
-                ],
+              const SizedBox(height: 8),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildTrackTile(ctx, type, "auto", "Auto (Por defecto)",
+                        currentSavedId == 'auto'),
+                    _buildTrackTile(
+                        ctx, type, "no", "Desactivado", currentSavedId == 'no'),
+                    const Divider(color: Colors.white24),
+                    ...tracks.map((track) {
+                      final label = track.language ??
+                          track.title ??
+                          track.id ??
+                          "Desconocido";
+                      return _buildTrackTile(ctx, type, track.id ?? "", label,
+                          currentSavedId == track.id);
+                    }).toList(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -367,13 +374,15 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       BuildContext ctx, String type, String id, String label, bool isSelected) {
     return ListTile(
       selected: isSelected,
-      selectedTileColor: Colors.blueAccent.withOpacity(0.2),
+      selectedTileColor: CinematicColors.accent.withOpacity(0.2),
       leading: isSelected
-          ? const Icon(Icons.check, color: Colors.blueAccent)
+          ? const Icon(Icons.check, color: CinematicColors.accentSoft)
           : const SizedBox(width: 24),
       title: Text(label,
-          style:
-              TextStyle(color: isSelected ? Colors.blueAccent : Colors.white)),
+          style: TextStyle(
+              color: isSelected
+                  ? CinematicColors.accentSoft
+                  : CinematicColors.textPrimary)),
       onTap: () async {
         Navigator.pop(ctx);
         setState(() {
@@ -509,20 +518,18 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
             // 3. INDICADORES DE GESTOS
             if (_showVolumeIndicator)
               Center(
-                child: Container(
+                child: CinematicGlassCard(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(15)),
+                  borderRadius: BorderRadius.circular(16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(_volume == 0 ? Icons.volume_off : Icons.volume_up,
-                          color: Colors.white, size: 40),
+                          color: CinematicColors.textPrimary, size: 40),
                       const SizedBox(height: 10),
                       Text("${(_volume * 100).toInt()}%",
                           style: const TextStyle(
-                              color: Colors.white,
+                              color: CinematicColors.textPrimary,
                               fontSize: 20,
                               fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
@@ -533,7 +540,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                             value: _volume,
                             backgroundColor: Colors.white24,
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                                Colors.blueAccent)),
+                                CinematicColors.accentSoft)),
                       ),
                     ],
                   ),
@@ -542,20 +549,18 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
             if (_showBrightnessIndicator)
               Center(
-                child: Container(
+                child: CinematicGlassCard(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(15)),
+                  borderRadius: BorderRadius.circular(16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.brightness_6,
-                          color: Colors.white, size: 40),
+                          color: CinematicColors.textPrimary, size: 40),
                       const SizedBox(height: 10),
                       Text("${(_brightness * 100).toInt()}%",
                           style: const TextStyle(
-                              color: Colors.white,
+                              color: CinematicColors.textPrimary,
                               fontSize: 20,
                               fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
@@ -566,7 +571,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                             value: _brightness,
                             backgroundColor: Colors.white24,
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                                Colors.orangeAccent)),
+                                CinematicColors.accent)),
                       ),
                     ],
                   ),
@@ -581,10 +586,13 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(color: Colors.blueAccent),
+                      CircularProgressIndicator(
+                          color: CinematicColors.accentSoft),
                       SizedBox(height: 20),
                       Text("Cargando...",
-                          style: TextStyle(color: Colors.white, fontSize: 12))
+                          style: TextStyle(
+                              color: CinematicColors.textPrimary,
+                              fontSize: 12))
                     ],
                   ),
                 ),
@@ -602,89 +610,98 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               top: 0,
               bottom: 0,
               width: 380,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.95),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black, blurRadius: 20, spreadRadius: 5)
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
-                      color: Colors.white10,
-                      width: double.infinity,
-                      child: const Text("Guía de Canales",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18)),
-                    ),
-                    Expanded(
-                      child: _channelsByCategory.isNotEmpty
-                          ? ListView.builder(
-                              itemCount: _sortedCategories.length,
-                              itemBuilder: (context, index) {
-                                final category = _sortedCategories[index];
-                                final channels = _channelsByCategory[category]!;
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: CinematicGlassCard(
+                  padding: EdgeInsets.zero,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(18),
+                    bottomRight: Radius.circular(18),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
+                        width: double.infinity,
+                        child: const Text("Guía de Canales",
+                            style: TextStyle(
+                                color: CinematicColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18)),
+                      ),
+                      Expanded(
+                        child: _channelsByCategory.isNotEmpty
+                            ? ListView.builder(
+                                itemCount: _sortedCategories.length,
+                                itemBuilder: (context, index) {
+                                  final category = _sortedCategories[index];
+                                  final channels =
+                                      _channelsByCategory[category]!;
 
-                                return Theme(
-                                  data: Theme.of(context).copyWith(
-                                      dividerColor: Colors.transparent),
-                                  child: ExpansionTile(
-                                    title: Text(category,
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold)),
-                                    iconColor: Colors.blueAccent,
-                                    collapsedIconColor: Colors.white54,
-                                    children: channels.map((ch) {
-                                      final isSelected =
-                                          ch.id == _currentChannel.id;
-                                      return ListTile(
-                                        contentPadding: const EdgeInsets.only(
-                                            left: 30, right: 10),
-                                        selected: isSelected,
-                                        selectedTileColor:
-                                            Colors.blueAccent.withOpacity(0.2),
-                                        leading: SizedBox(
-                                          width: 30,
-                                          height: 30,
-                                          child: ch.logoUrl != null &&
-                                                  ch.logoUrl!.isNotEmpty
-                                              ? Image.network(ch.logoUrl!,
-                                                  errorBuilder: (c, e, s) =>
-                                                      const Icon(Icons.tv,
-                                                          color: Colors.white54,
-                                                          size: 20))
-                                              : const Icon(Icons.tv,
-                                                  color: Colors.white54,
-                                                  size: 20),
-                                        ),
-                                        title: Text(
-                                          ch.name,
-                                          style: TextStyle(
-                                              color: isSelected
-                                                  ? Colors.blueAccent
-                                                  : Colors.white70,
-                                              fontSize: 14),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        onTap: () => _switchChannel(ch),
-                                      );
-                                    }).toList(),
-                                  ),
-                                );
-                              },
-                            )
-                          : const Center(
-                              child: CircularProgressIndicator(
-                                  color: Colors.blueAccent)),
-                    ),
-                  ],
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                        dividerColor: Colors.transparent),
+                                    child: ExpansionTile(
+                                      title: Text(category,
+                                          style: const TextStyle(
+                                              color:
+                                                  CinematicColors.textPrimary,
+                                              fontWeight: FontWeight.bold)),
+                                      iconColor: CinematicColors.accentSoft,
+                                      collapsedIconColor:
+                                          CinematicColors.textMuted,
+                                      children: channels.map((ch) {
+                                        final isSelected =
+                                            ch.id == _currentChannel.id;
+                                        return ListTile(
+                                          contentPadding:
+                                              const EdgeInsets.only(
+                                                  left: 30, right: 10),
+                                          selected: isSelected,
+                                          selectedTileColor:
+                                              CinematicColors.accent
+                                                  .withOpacity(0.2),
+                                          leading: SizedBox(
+                                            width: 30,
+                                            height: 30,
+                                            child: ch.logoUrl != null &&
+                                                    ch.logoUrl!.isNotEmpty
+                                                ? Image.network(ch.logoUrl!,
+                                                    errorBuilder: (c, e, s) =>
+                                                        const Icon(Icons.tv,
+                                                            color:
+                                                                CinematicColors
+                                                                    .textMuted,
+                                                            size: 20))
+                                                : const Icon(Icons.tv,
+                                                    color: CinematicColors
+                                                        .textMuted,
+                                                    size: 20),
+                                          ),
+                                          title: Text(
+                                            ch.name,
+                                            style: TextStyle(
+                                                color: isSelected
+                                                    ? CinematicColors
+                                                        .accentSoft
+                                                    : CinematicColors.textMuted,
+                                                fontSize: 14),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          onTap: () => _switchChannel(ch),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  );
+                                },
+                              )
+                            : const Center(
+                                child: CircularProgressIndicator(
+                                    color: CinematicColors.accentSoft)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -696,111 +713,129 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
   Widget _buildMainInterface() {
     return Container(
-      color: Colors.black.withOpacity(0.4),
+      color: Colors.black.withOpacity(0.25),
       child: SafeArea(
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 10),
-                  if (_currentChannel.logoUrl != null &&
-                      _currentChannel.logoUrl!.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(right: 15),
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(8)),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          _currentChannel.logoUrl!,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.tv, color: Colors.white54),
+              child: CinematicGlassCard(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios,
+                          color: CinematicColors.textPrimary),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 10),
+                    if (_currentChannel.logoUrl != null &&
+                        _currentChannel.logoUrl!.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(right: 15),
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                            color:
+                                CinematicColors.backgroundElevated.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: CinematicColors.stroke)),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            _currentChannel.logoUrl!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.tv,
+                                    color: CinematicColors.textMuted),
+                          ),
                         ),
                       ),
-                    ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _currentChannel.name,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              shadows: [
-                                Shadow(blurRadius: 10, color: Colors.black)
-                              ]),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (_currentChannel.group != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                                color: Colors.blueAccent.withOpacity(0.8),
-                                borderRadius: BorderRadius.circular(4)),
-                            child: Text(_currentChannel.group!,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _currentChannel.name,
+                            style: const TextStyle(
+                                color: CinematicColors.textPrimary,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                      blurRadius: 10,
+                                      color: Colors.black45)
+                                ]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      ],
+                          if (_currentChannel.group != null)
+                            Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                  color: CinematicColors.accent.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(6)),
+                              child: Text(_currentChannel.group!,
+                                  style: const TextStyle(
+                                      color: CinematicColors.textPrimary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          const SizedBox(height: 6),
+                          CinematicPlatformBadges.placeholder(),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Icon(Icons.access_time, color: Colors.white70),
-                  const SizedBox(width: 5),
-                  Text(_currentTime,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(blurRadius: 10, color: Colors.black)
-                          ])),
-                ],
+                    const Icon(Icons.access_time,
+                        color: CinematicColors.textMuted),
+                    const SizedBox(width: 5),
+                    Text(_currentTime,
+                        style: const TextStyle(
+                            color: CinematicColors.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                  blurRadius: 10, color: Colors.black54)
+                            ])),
+                  ],
+                ),
               ),
             ),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildPlayerButton(Icons.list, "Canales", _toggleChannelList),
-                  _buildPlayerButton(_getAspectRatioIcon(), _aspectRatioText,
-                      _cycleAspectRatio),
-                  FloatingActionButton(
-                    backgroundColor: Colors.blueAccent,
-                    child: StreamBuilder<bool>(
-                      stream: player.stream.playing,
-                      initialData: true,
-                      builder: (context, snapshot) {
-                        return Icon(
-                            (snapshot.data ?? true)
-                                ? Icons.pause
-                                : Icons.play_arrow,
-                            size: 30);
-                      },
+              child: CinematicGlassCard(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildPlayerButton(Icons.list, "Canales", _toggleChannelList),
+                    _buildPlayerButton(_getAspectRatioIcon(), _aspectRatioText,
+                        _cycleAspectRatio),
+                    FloatingActionButton(
+                      backgroundColor: CinematicColors.accentSoft,
+                      child: StreamBuilder<bool>(
+                        stream: player.stream.playing,
+                        initialData: true,
+                        builder: (context, snapshot) {
+                          return Icon(
+                              (snapshot.data ?? true)
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              size: 30);
+                        },
+                      ),
+                      onPressed: player.playOrPause,
                     ),
-                    onPressed: player.playOrPause,
-                  ),
-                  _buildPlayerButton(Icons.dvr, "Guía", _showEpgGuide),
-                  _buildPlayerButton(
-                      Icons.settings, "Ajustes", _showSettingsDialog),
-                ],
+                    _buildPlayerButton(Icons.dvr, "Guía", _showEpgGuide),
+                    _buildPlayerButton(
+                        Icons.settings, "Ajustes", _showSettingsDialog),
+                  ],
+                ),
               ),
             ),
           ],
@@ -830,13 +865,13 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon,
-                color: Colors.white,
+                color: CinematicColors.textPrimary,
                 size: 28,
                 shadows: const [Shadow(blurRadius: 5, color: Colors.black)]),
             const SizedBox(height: 4),
             Text(label,
                 style: const TextStyle(
-                    color: Colors.white,
+                    color: CinematicColors.textPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     shadows: [Shadow(blurRadius: 5, color: Colors.black)])),

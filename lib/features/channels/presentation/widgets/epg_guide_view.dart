@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:omnistream_iptv/core/theme/cinematic_theme.dart';
+import 'package:omnistream_iptv/core/widgets/cinematic_glass_card.dart';
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 class EpgGuideView extends StatefulWidget {
@@ -46,8 +48,7 @@ class _EpgGuideViewState extends State<EpgGuideView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF101010)
-          .withOpacity(0.95), // Fondo oscuro semi-transparente
+      color: CinematicColors.backgroundDeep.withOpacity(0.92),
       child: SafeArea(
         child: Column(
           children: [
@@ -60,7 +61,7 @@ class _EpgGuideViewState extends State<EpgGuideView> {
                 children: [
                   // COLUMNA IZQUIERDA: LISTA DE CANALES
                   SizedBox(
-                    width: 250,
+                    width: 260,
                     child: ListView.builder(
                       controller: _verticalController,
                       itemCount: _filteredChannels.length,
@@ -79,12 +80,10 @@ class _EpgGuideViewState extends State<EpgGuideView> {
                       scrollDirection: Axis.horizontal,
                       controller: _horizontalController,
                       child: SizedBox(
-                        width: 1000, // Ancho virtual de la línea de tiempo
+                        width: 1000,
                         child: ListView.builder(
-                          controller:
-                              _verticalController, // Scroll sincronizado verticalmente
-                          physics:
-                              const NeverScrollableScrollPhysics(), // Solo se mueve con la lista de canales
+                          controller: _verticalController,
+                          physics: const NeverScrollableScrollPhysics(),
                           itemCount: _filteredChannels.length,
                           itemBuilder: (context, index) {
                             return _buildTimelineRow();
@@ -106,41 +105,43 @@ class _EpgGuideViewState extends State<EpgGuideView> {
     final now = DateTime.now();
     final timeFormat = DateFormat('HH:mm');
 
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white10)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.dvr, color: Colors.blueAccent),
-              const SizedBox(width: 10),
-              const Text("Guía de TV",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(width: 20),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(20)),
-                child: Text(DateFormat('EEE, d MMM').format(now),
-                    style: const TextStyle(color: Colors.white70)),
-              )
-            ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          )
-        ],
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: CinematicGlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.dvr, color: CinematicColors.accentSoft),
+                const SizedBox(width: 10),
+                const Text("Guía de TV",
+                    style: TextStyle(
+                        color: CinematicColors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(width: 20),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: CinematicColors.backgroundElevated.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: CinematicColors.stroke)),
+                  child: Text(DateFormat('EEE, d MMM').format(now),
+                      style:
+                          const TextStyle(color: CinematicColors.textMuted)),
+                )
+              ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.close,
+                  color: CinematicColors.textPrimary),
+              onPressed: () => Navigator.pop(context),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -156,7 +157,7 @@ class _EpgGuideViewState extends State<EpgGuideView> {
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.blueAccent.withOpacity(0.2)
+              ? CinematicColors.accent.withOpacity(0.2)
               : Colors.transparent,
           border: const Border(
               bottom: BorderSide(color: Colors.white12),
@@ -164,26 +165,27 @@ class _EpgGuideViewState extends State<EpgGuideView> {
         ),
         child: Row(
           children: [
-            // Logo
             Container(
               width: 50,
               height: 50,
               margin: const EdgeInsets.only(right: 10),
               decoration: BoxDecoration(
-                  color: Colors.white10,
-                  borderRadius: BorderRadius.circular(8)),
+                  color: CinematicColors.backgroundElevated.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: CinematicColors.stroke)),
               child: channel.logoUrl != null
                   ? Image.network(channel.logoUrl!,
-                      errorBuilder: (c, e, s) =>
-                          const Icon(Icons.tv, color: Colors.white54))
-                  : const Icon(Icons.tv, color: Colors.white54),
+                      errorBuilder: (c, e, s) => const Icon(Icons.tv,
+                          color: CinematicColors.textMuted))
+                  : const Icon(Icons.tv, color: CinematicColors.textMuted),
             ),
-            // Nombre
             Expanded(
               child: Text(
                 channel.name,
                 style: TextStyle(
-                  color: isSelected ? Colors.blueAccent : Colors.white,
+                  color: isSelected
+                      ? CinematicColors.accentSoft
+                      : CinematicColors.textPrimary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
                 maxLines: 2,
@@ -192,7 +194,7 @@ class _EpgGuideViewState extends State<EpgGuideView> {
             ),
             if (isSelected)
               const Icon(Icons.play_circle_fill,
-                  color: Colors.blueAccent, size: 20),
+                  color: CinematicColors.accentSoft, size: 20),
           ],
         ),
       ),
@@ -208,16 +210,15 @@ class _EpgGuideViewState extends State<EpgGuideView> {
       ),
       child: Row(
         children: [
-          // Programa Actual (Simulado)
           Expanded(
             flex: 4,
             child: Container(
               margin: const EdgeInsets.all(4),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white10,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.white24),
+                color: CinematicColors.backgroundElevated.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: CinematicColors.stroke),
               ),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,26 +226,27 @@ class _EpgGuideViewState extends State<EpgGuideView> {
                 children: [
                   Text("Programación en Vivo",
                       style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
+                          color: CinematicColors.textPrimary,
+                          fontWeight: FontWeight.bold)),
                   Text("Sin información EPG detallada",
-                      style: TextStyle(color: Colors.white54, fontSize: 12)),
+                      style: TextStyle(
+                          color: CinematicColors.textMuted, fontSize: 12)),
                 ],
               ),
             ),
           ),
-          // Programa Siguiente (Simulado)
           Expanded(
             flex: 3,
             child: Container(
               margin: const EdgeInsets.all(4),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(4),
+                color: CinematicColors.backgroundElevated.withOpacity(0.35),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: const Center(
                   child: Text("Siguiente programa...",
-                      style: TextStyle(color: Colors.white38))),
+                      style: TextStyle(color: CinematicColors.textMuted))),
             ),
           ),
         ],

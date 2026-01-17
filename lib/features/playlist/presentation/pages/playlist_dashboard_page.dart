@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:omnistream_iptv/core/theme/cinematic_theme.dart';
+import 'package:omnistream_iptv/core/widgets/cinematic_background.dart';
+import 'package:omnistream_iptv/core/widgets/cinematic_glass_card.dart';
+import 'package:omnistream_iptv/core/widgets/cinematic_platform_badges.dart';
 
 class PlaylistDashboardPage extends StatefulWidget {
   const PlaylistDashboardPage({super.key});
@@ -23,41 +27,62 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F14),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0F14),
-        elevation: 0,
-        title: const Text('Playlists'),
-        actions: [
-          IconButton(
-            tooltip: 'Añadir',
-            icon: const Icon(Icons.add),
-            onPressed: _showAddDialog,
+      backgroundColor: Colors.transparent,
+      body: CinematicBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                CinematicGlassCard(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Playlists',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: CinematicColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        tooltip: 'Añadir',
+                        icon: const Icon(Icons.add,
+                            color: CinematicColors.textPrimary),
+                        onPressed: _showAddDialog,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _items.isEmpty
+                      ? _EmptyState(onAdd: _showAddDialog)
+                      : ListView.separated(
+                          itemCount: _items.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final item = _items[index];
+                            return _PlaylistCard(
+                              item: item,
+                              onOpen: () {
+                                // ✅ Navega al listado de canales pasando playlistUrl
+                                context.goNamed(
+                                  'playlist_home',
+                                  extra: item.url,
+                                );
+                              },
+                              onMore: () => _showMoreSheet(item),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: _items.isEmpty
-            ? _EmptyState(onAdd: _showAddDialog)
-            : ListView.separated(
-                itemCount: _items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  return _PlaylistCard(
-                    item: item,
-                    onOpen: () {
-                      // ✅ Navega al listado de canales pasando playlistUrl
-                      context.goNamed(
-                        'playlist_home',
-                        extra: item.url,
-                      );
-                    },
-                    onMore: () => _showMoreSheet(item),
-                  );
-                },
-              ),
+        ),
       ),
     );
   }
@@ -73,6 +98,7 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
         final typeCtrl = TextEditingController(text: 'm3u');
 
         return AlertDialog(
+          backgroundColor: CinematicColors.backgroundElevated,
           title: const Text('Añadir playlist'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -115,7 +141,7 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
   void _showMoreSheet(_PlaylistItem item) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF121826),
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
@@ -123,41 +149,47 @@ class _PlaylistDashboardPageState extends State<PlaylistDashboardPage> {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 44,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(999),
+            child: CinematicGlassCard(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                ListTile(
-                  leading: const Icon(Icons.play_arrow, color: Colors.white),
-                  title: const Text('Abrir',
-                      style: TextStyle(color: Colors.white)),
-                  subtitle: Text(item.url,
-                      style: const TextStyle(color: Colors.white54)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    context.goNamed('playlist_home', extra: item.url);
-                  },
-                ),
-                const Divider(color: Colors.white12),
-                ListTile(
-                  leading:
-                      const Icon(Icons.delete_outline, color: Colors.redAccent),
-                  title: const Text('Eliminar',
-                      style: TextStyle(color: Colors.redAccent)),
-                  onTap: () {
-                    // Aquí luego conectamos DeletePlaylistProfile
-                    Navigator.pop(ctx);
-                  },
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  ListTile(
+                    leading:
+                        const Icon(Icons.play_arrow, color: Colors.white),
+                    title: const Text('Abrir',
+                        style: TextStyle(color: Colors.white)),
+                    subtitle: Text(item.url,
+                        style: const TextStyle(color: Colors.white54)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      context.goNamed('playlist_home', extra: item.url);
+                    },
+                  ),
+                  const Divider(color: Colors.white12),
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline,
+                        color: Colors.redAccent),
+                    title: const Text('Eliminar',
+                        style: TextStyle(color: Colors.redAccent)),
+                    onTap: () {
+                      // Aquí luego conectamos DeletePlaylistProfile
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -197,67 +229,68 @@ class _PlaylistCard extends StatelessWidget {
       onTap: onOpen,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFF121826),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.playlist_play, color: Colors.white),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.url,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white54),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            if (item.type != null)
+        child: CinematicGlassCard(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white10,
-                  borderRadius: BorderRadius.circular(999),
+                  color: CinematicColors.backgroundElevated.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: CinematicColors.stroke),
                 ),
-                child: Text(
-                  item.type!,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                child:
+                    const Icon(Icons.playlist_play, color: Colors.white, size: 26),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: CinematicColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.url,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: CinematicColors.textMuted),
+                    ),
+                    const SizedBox(height: 8),
+                    CinematicPlatformBadges.placeholder(),
+                  ],
                 ),
               ),
-            IconButton(
-              onPressed: onMore,
-              icon: const Icon(Icons.more_vert, color: Colors.white70),
-            ),
-          ],
+              const SizedBox(width: 8),
+              if (item.type != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    item.type!,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ),
+              IconButton(
+                onPressed: onMore,
+                icon: const Icon(Icons.more_vert, color: Colors.white70),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -272,29 +305,26 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
+      child: CinematicGlassCard(
         padding: const EdgeInsets.all(18),
-        constraints: const BoxConstraints(maxWidth: 420),
-        decoration: BoxDecoration(
-          color: const Color(0xFF121826),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white10),
-        ),
+        borderRadius: BorderRadius.circular(18),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.playlist_add, size: 44, color: Colors.white),
+            const Icon(Icons.playlist_add,
+                size: 44, color: CinematicColors.textPrimary),
             const SizedBox(height: 10),
             const Text(
               'Aún no tienes playlists',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: CinematicColors.textPrimary,
+                  fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             const Text(
               'Añade una URL M3U o Xtream para empezar.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54),
+              style: TextStyle(color: CinematicColors.textMuted),
             ),
             const SizedBox(height: 14),
             ElevatedButton.icon(
