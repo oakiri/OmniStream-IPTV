@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'cinematic_theme.dart';
+
 class AppTheme {
   // Colores estilo "Smarters"
-  static const Color primaryColor = Color(0xFF0D47A1); // Azul fuerte
-  static const Color accentColor = Color(0xFF42A5F5); // Azul claro selección
-  static const Color backgroundColor = Color(0xFF0F1218); // Negro casi puro
-  static const Color surfaceColor =
-      Color(0xFF1E2430); // Gris azulado para tarjetas
+  static const Color primaryColor = CinematicColors.accent;
+  static const Color accentColor = CinematicColors.accentSoft;
+  static const Color backgroundColor = CinematicColors.background;
+  static const Color surfaceColor = CinematicColors.backgroundElevated;
   static const Color errorColor = Color(0xFFCF6679);
 
   static final ThemeData darkTheme = ThemeData(
