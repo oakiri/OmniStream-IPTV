@@ -6,6 +6,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:volume_controller/volume_controller.dart';
 import 'package:screen_brightness/screen_brightness.dart';
+import 'package:go_router/go_router.dart'; // Importante para context.pop()
 
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/channels/presentation/widgets/epg_guide_view.dart';
@@ -49,7 +50,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
   // ESTADO ASPECT RATIO (ZOOM)
   BoxFit _videoFit = BoxFit.contain;
-  String _aspectRatioText = "Normal"; // Esto se mostrará en la barra superior
+  String _aspectRatioText = "Normal";
 
   // ESTADO SELECCIÓN (MEMORIA MANUAL)
   String _savedAudioId = 'auto';
@@ -62,6 +63,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     super.initState();
     _currentChannel = widget.channel;
     
+    // Forzar modo inmersivo y orientación horizontal para el video
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
@@ -162,7 +164,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     });
   }
 
-  // --- LÓGICA ZOOM ACTUALIZADA ---
   void _cycleAspectRatio() {
     setState(() {
       if (_videoFit == BoxFit.contain) {
@@ -177,10 +178,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       }
     });
     
-    // CORRECCIÓN: Quitamos el SnackBar que no se veía bien.
-    // El texto se actualiza automáticamente en la barra superior.
-    
-    _startHideTimer(); // Reiniciamos el timer para que la UI se vea unos segundos
+    _startHideTimer(); 
   }
 
   void _showEpgGuide() {
@@ -208,7 +206,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     ).then((_) => _startHideTimer());
   }
 
-  // --- FIX BENNY HILL (Audio/Subtitulos) ---
   Future<void> _changeTrack(String type, String id) async {
     setState(() => _isLoading = true);
     
@@ -313,7 +310,16 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _clockTimer?.cancel();
     _indicatorTimer?.cancel();
     _volumeController.removeListener();
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    
+    // --- CORRECCIÓN IMPORTANTE: RESTAURAR ROTACIÓN ---
+    // Restaurar todas las orientaciones permitidas al salir
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    // Restaurar UI del sistema
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     super.dispose();
   }
@@ -354,15 +360,16 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           if (_areControlsVisible && !_isLoading) ...[
             const Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black87, Colors.transparent, Colors.black87], begin: Alignment.topCenter, end: Alignment.bottomCenter, stops: [0.0, 0.5, 1.0])))),
             
-            // BARRA SUPERIOR (Ahora recibe aspectRatioText)
+            // BARRA SUPERIOR
             Positioned(
               top: 0, left: 0, right: 0, 
               child: CinematicTopBar(
                 currentTime: _currentTime,
-                aspectRatioText: _aspectRatioText, // <--- AQUÍ PASAMOS EL ESTADO
+                aspectRatioText: _aspectRatioText, 
               )
             ),
             
+            // MENÚ LATERAL
             Positioned(
               top: 0, bottom: 0, left: 0, 
               child: CinematicSideMenu(
@@ -372,12 +379,35 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               )
             ),
             
+            // TARJETA DE INFO
             Positioned(
               bottom: 30, left: 100, right: 30,
               child: CinematicGlassCard(
                 channel: _currentChannel, 
                 isPlaying: player.state.playing, 
                 onPlayPause: player.playOrPause
+              ),
+            ),
+
+            // --- AÑADIDO: BOTÓN VOLVER (BACK BUTTON) ---
+            Positioned(
+              top: 30, // Ajustado para que no choque con la barra de estado
+              left: 20,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => context.pop(), // Acción de volver
+                  borderRadius: BorderRadius.circular(30),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white24, width: 1),
+                    ),
+                    child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                  ),
+                ),
               ),
             ),
           ],

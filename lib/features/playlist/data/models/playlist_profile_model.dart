@@ -23,6 +23,10 @@ class PlaylistProfileModel extends PlaylistProfile {
   @HiveField(5)
   final DateTime? lastUsed;
 
+  // NUEVO CAMPO (Índice 6)
+  @HiveField(6)
+  final DateTime? expirationDate;
+
   const PlaylistProfileModel({
     required this.id,
     required this.name,
@@ -30,6 +34,7 @@ class PlaylistProfileModel extends PlaylistProfile {
     required this.userId,
     this.type,
     this.lastUsed,
+    this.expirationDate,
   }) : super(
           id: id, 
           name: name, 
@@ -37,6 +42,7 @@ class PlaylistProfileModel extends PlaylistProfile {
           userId: userId,
           type: type,
           lastUsed: lastUsed,
+          expirationDate: expirationDate,
         );
 
   factory PlaylistProfileModel.fromEntity(PlaylistProfile profile) {
@@ -47,6 +53,7 @@ class PlaylistProfileModel extends PlaylistProfile {
       userId: profile.userId ?? 'local',
       type: profile.type,
       lastUsed: profile.lastUsed,
+      expirationDate: profile.expirationDate,
     );
   }
 
@@ -58,6 +65,7 @@ class PlaylistProfileModel extends PlaylistProfile {
       'userId': userId,
       'type': type,
       'lastUsed': lastUsed?.toIso8601String(),
+      'expirationDate': expirationDate?.toIso8601String(),
     };
   }
 }
