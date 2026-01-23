@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; // <--- NUEVO IMPORT
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -20,27 +20,19 @@ import 'package:omnistream_iptv/features/speed_test/presentation/pages/speed_tes
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'injection_container.dart' as di;
 import 'package:omnistream_iptv/injection_container.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart'; // Evitar si da error
 import 'package:omnistream_iptv/features/playlist/data/models/playlist_profile_model.dart';
 
-// --- BACKGROUND HANDLER SEGURO (Fase 0 Fix) ---
-// Este método debe estar FUERA de cualquier clase y marcado como entry-point.
-// Se ejecuta en un proceso aislado (Isolate), por lo que NO tiene acceso a 'sl' ni a 'Get'.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Aseguramos que el motor de Flutter esté listo
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Inicializamos Firebase solo para este proceso aislado
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // NOTA: No intentes usar 'sl<Service>' aquí porque GetIt no está inicializado en este isolate.
-  // Si necesitas lógica compleja (como TimestampService), debes inicializarla aquí manualmente.
   debugPrint("📩 Mensaje en segundo plano recibido: ${message.messageId}");
 }
 
+// ESTE ES EL ROUTER QUE USAREMOS
 final _router = GoRouter(
   initialLocation: '/dashboard',
   routes: [
@@ -109,30 +101,18 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
-  // 1. Cargar Variables de Entorno
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    debugPrint("⚠️ .env no encontrado");
-  }
-
-  // 2. Inicializar Firebase
+  // Inicializar Firebase
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    
-    // --- REGISTRO DEL HANDLER (Fase 0 Fix) ---
-    // Esto sobrescribe cualquier handler antiguo corrupto
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
     await FirebaseAuth.instance.signInAnonymously(); 
-    debugPrint("✅ Usuario Logueado ID: ${FirebaseAuth.instance.currentUser?.uid}");
   } catch (e) {
     debugPrint("❌ Error crítico en Firebase: $e");
   }
 
-  // 3. Inicializar Almacenamiento Local e Inyección de Dependencias
+  // Inicializar Hive y DI
   await Hive.initFlutter();
   Hive.registerAdapter(PlaylistProfileModelAdapter()); 
   await di.init();
@@ -152,7 +132,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp.router(
-        routerConfig: _router,
+        routerConfig: _router, // <--- CORREGIDO: Usamos _router en vez de AppRouter.router
         title: 'OmniStream IPTV',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
