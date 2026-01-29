@@ -1,12 +1,15 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:volume_controller/volume_controller.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'package:go_router/go_router.dart'; // Importante para context.pop()
+
+import 'package:omnistream_iptv/injection_container.dart';
+import 'package:omnistream_iptv/core/storage/recent_playback_store.dart';
 
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 import 'package:omnistream_iptv/features/channels/presentation/widgets/epg_guide_view.dart';
@@ -18,11 +21,13 @@ import 'package:omnistream_iptv/core/widgets/cinematic_glass_card.dart';
 class VideoPlayerPage extends StatefulWidget {
   final Channel channel;
   final List<Channel>? channels;
+  final String? playlistUrl;
 
   const VideoPlayerPage({
     super.key,
     required this.channel,
     this.channels,
+    this.playlistUrl,
   });
 
   @override
@@ -58,10 +63,22 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
   late Channel _currentChannel;
 
+  Future<void> _persistLastChannel(Channel ch) async {
+    try {
+      await sl<RecentPlaybackStore>().saveLastChannel(
+        channel: ch,
+        playlistUrl: widget.playlistUrl,
+      );
+    } catch (_) {
+      // Silencioso: no debe romper reproducción.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _currentChannel = widget.channel;
+    _persistLastChannel(_currentChannel);
     
     // Forzar modo inmersivo y orientación horizontal para el video
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -109,7 +126,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   void _updateTime() {
     if (mounted) {
       setState(() {
-        _currentTime = DateFormat('HH:mm').format(DateTime.now());
+        _currentTime = intl.DateFormat('HH:mm').format(DateTime.now());
       });
     }
   }
@@ -201,6 +218,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
             _savedSubtitleId = 'auto';
             player.open(Media(newChannel.url));
           });
+          _persistLastChannel(newChannel);
         },
       ),
     ).then((_) => _startHideTimer());
@@ -311,15 +329,13 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _indicatorTimer?.cancel();
     _volumeController.removeListener();
     
-    // --- CORRECCIÓN IMPORTANTE: RESTAURAR ROTACIÓN ---
-    // Restaurar todas las orientaciones permitidas al salir
+    // --- RESTAURAR ROTACIÓN (CRÍTICO) ---
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-    // Restaurar UI del sistema
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     super.dispose();
   }

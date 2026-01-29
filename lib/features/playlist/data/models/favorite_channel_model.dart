@@ -4,7 +4,9 @@ import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 part 'favorite_channel_model.g.dart';
 
-@HiveType(typeId: 2)
+// NOTE: typeId MUST be unique across the whole app.
+// EPGProgramModel already uses typeId: 2, so we move favorites to an unused id.
+@HiveType(typeId: 4)
 @JsonSerializable()
 class FavoriteChannelModel extends Channel {
   @HiveField(0)

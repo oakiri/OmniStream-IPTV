@@ -1,307 +1,236 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:omnistream_iptv/core/widgets/cinematic_theme.dart';
 
-class MainShellPage extends StatefulWidget {
+/// Main persistent shell for the app.
+///
+/// Goals:
+/// - 1 source of truth: the Shell index comes from GoRouter's StatefulNavigationShell.
+/// - Responsive: BottomNav on mobile, SideRail on tablets/TV.
+/// - No overlay menus that intercept taps / cause solapes.
+class MainShellPage extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
   const MainShellPage({super.key, required this.navigationShell});
 
-  @override
-  State<MainShellPage> createState() => _MainShellPageState();
-}
-
-class _MainShellPageState extends State<MainShellPage> with SingleTickerProviderStateMixin {
-  bool _isExpanded = false; 
-  late AnimationController _animController;
-  late Animation<double> _blurAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
-    _blurAnimation = Tween<double>(begin: 0.0, end: 5.0).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
-
-  void _toggleMenu() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-      if (_isExpanded) _animController.forward(); else _animController.reverse();
-    });
+  void _go(int index) {
+    navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
   }
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
-    final double safePaddingLeft = MediaQuery.of(context).padding.left;
-    
-    // Ancho total incluyendo el notch
-    final double sidebarWidth = (_isExpanded ? 260.0 : 80.0) + safePaddingLeft;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Tablet/TV breakpoint.
+        // En móviles en horizontal (y especialmente con el teclado abierto),
+        // usar NavigationRail provoca overflows (RenderFlex overflowed) y layouts rotos.
+        // Por eso, solo activamos el modo "...Large" si el dispositivo parece tablet/TV
+        // (shortestSide >= 600) y además no hay teclado en pantalla.
+        final mq = MediaQuery.of(context);
+        final shortestSide = mq.size.shortestSide;
+        final keyboardOpen = mq.viewInsets.bottom > 0;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          // CAPA 1: CONTENIDO (LISTAS Y DASHBOARD)
-          Positioned.fill(
-            child: GestureDetector(
-              // IMPORTANTE: Esto permite que los clics pasen a las listas si el menú está cerrado
-              onTap: () { 
-                if (_isExpanded) _toggleMenu(); 
-              },
-              behavior: _isExpanded ? HitTestBehavior.opaque : HitTestBehavior.translucent,
-              child: widget.navigationShell,
-            ),
-          ),
+        final isLarge = !keyboardOpen && constraints.maxWidth >= 820 && shortestSide >= 600;
 
-          // CAPA 2: OSCURECIMIENTO (Solo visible si menú abierto)
-          if (_isExpanded)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: _toggleMenu,
-                child: AnimatedBuilder(
-                  animation: _blurAnimation,
-                  builder: (context, child) => BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: _blurAnimation.value, sigmaY: _blurAnimation.value),
-                    child: Container(color: Colors.black.withOpacity(0.4 * _animController.value)),
-                  ),
-                ),
-              ),
-            ),
-
-          // CAPA 3: BARRA LATERAL
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            left: 0, top: 0, bottom: 0,
-            width: sidebarWidth,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(topRight: Radius.circular(24), bottomRight: Radius.circular(24)),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: Stack(
+            children: [
+              Positioned.fill(
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF121212).withOpacity(0.96), 
-                    border: const Border(right: BorderSide(color: Colors.white10, width: 1)),
-                    boxShadow: _isExpanded ? [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 40, offset: const Offset(10, 0))] : [],
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.only(left: safePaddingLeft),
-                    child: SafeArea(
-                      left: false, 
-                      right: false,
-                      // CORRECCIÓN: bottom: true para respetar la barra de gestos/botones
-                      bottom: true, 
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Si la altura disponible (ya restada la barra del sistema) es poca, scroll.
-                          bool useScrollView = constraints.maxHeight < 400;
-
-                          if (useScrollView) {
-                            return SingleChildScrollView(
-                              physics: const BouncingScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                              child: Column(
-                                children: [
-                                  _buildHeader(compact: true),
-                                  const SizedBox(height: 10),
-                                  _buildMenuOptions(compact: true),
-                                  const SizedBox(height: 10),
-                                  _buildUserFooter(),
-                                ],
-                              ),
-                            );
-                          } else {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-                              child: Column(
-                                children: [
-                                  _buildHeader(compact: false),
-                                  const SizedBox(height: 30),
-                                  _buildMenuOptions(compact: false),
-                                  const Spacer(), 
-                                  _buildUserFooter(),
-                                ],
-                              ),
-                            );
-                          }
-                        },
-                      ),
+                  decoration: const BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.topRight,
+                      radius: 1.6,
+                      colors: [Color(0xFF151515), Colors.black],
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ... (El resto de widgets _buildHeader, _buildMenuOptions, etc. son idénticos a la versión anterior)
-  // Asegúrate de copiar los widgets auxiliares (_MenuToggleButton, etc.) de la respuesta anterior
-  
-  Widget _buildHeader({required bool compact}) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: compact ? 5 : 10),
-      child: Row(
-        mainAxisAlignment: _isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
-        children: [
-          _MenuToggleButton(isExpanded: _isExpanded, onTap: _toggleMenu),
-          if (_isExpanded) ...[
-            const SizedBox(width: 15),
-            Expanded(
-              child: AnimatedOpacity(
-                opacity: _isExpanded ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: Text("OmniStream", style: GoogleFonts.audiowide(color: Colors.white, fontSize: 18), overflow: TextOverflow.ellipsis, maxLines: 1),
+              SafeArea(
+                child: isLarge
+                    ? Row(
+                        children: [
+                          _CinematicRail(
+                            selectedIndex: navigationShell.currentIndex,
+                            onSelect: _go,
+                          ),
+                          const VerticalDivider(width: 1, thickness: 1, color: Color(0x14000000)),
+                          Expanded(child: navigationShell),
+                        ],
+                      )
+                    : navigationShell,
               ),
-            ),
-          ]
-        ],
-      ),
+            ],
+          ),
+          bottomNavigationBar: isLarge
+              ? null
+              : _CinematicBottomBar(
+                  selectedIndex: navigationShell.currentIndex,
+                  onSelect: _go,
+                ),
+        );
+      },
     );
   }
+}
 
-  Widget _buildMenuOptions({required bool compact}) {
-    double spacing = compact ? 4 : 8;
-    return Column(
-      children: [
-        _GlowingMenuItem(icon: Icons.dashboard_rounded, label: "Inicio", isSelected: widget.navigationShell.currentIndex == 0, isExpanded: _isExpanded, onTap: () => _navigateTo(0)),
-        SizedBox(height: spacing),
-        _GlowingMenuItem(icon: Icons.live_tv_rounded, label: "TV en Vivo", isSelected: widget.navigationShell.currentIndex == 1, isExpanded: _isExpanded, onTap: () => _navigateTo(1)),
-        SizedBox(height: spacing),
-        _GlowingMenuItem(icon: Icons.movie_rounded, label: "Películas", isSelected: widget.navigationShell.currentIndex == 2, isExpanded: _isExpanded, onTap: () => _navigateTo(2)),
-        SizedBox(height: spacing * 2),
-        _GlowingMenuItem(icon: Icons.settings_rounded, label: "Ajustes", isSelected: widget.navigationShell.currentIndex == 3, isExpanded: _isExpanded, onTap: () => _navigateTo(3)),
+class _CinematicBottomBar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  const _CinematicBottomBar({required this.selectedIndex, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onSelect,
+      height: 76,
+      backgroundColor: const Color(0xFF131313),
+      indicatorColor: CinematicColors.accent.withOpacity(0.16),
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard_rounded),
+          label: 'Listas',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.live_tv_outlined),
+          selectedIcon: Icon(Icons.live_tv_rounded),
+          label: 'En vivo',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.movie_outlined),
+          selectedIcon: Icon(Icons.movie_rounded),
+          label: 'VOD',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings_rounded),
+          label: 'Ajustes',
+        ),
       ],
     );
   }
-
-  Widget _buildUserFooter() {
-    return _UserFooter(isExpanded: _isExpanded, onTap: () {});
-  }
-
-  void _navigateTo(int index) {
-    widget.navigationShell.goBranch(index, initialLocation: index == widget.navigationShell.currentIndex);
-  }
 }
 
-// --- WIDGETS AUXILIARES (Indispensables) ---
+class _CinematicRail extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
 
-class _MenuToggleButton extends StatelessWidget {
-  final bool isExpanded;
-  final VoidCallback onTap;
-  const _MenuToggleButton({required this.isExpanded, required this.onTap});
+  const _CinematicRail({required this.selectedIndex, required this.onSelect});
+
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(50),
-        child: Container( 
-          width: 44, height: 44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: isExpanded ? CinematicColors.accent : Colors.white10, shape: BoxShape.circle, boxShadow: isExpanded ? [const BoxShadow(color: CinematicColors.accent, blurRadius: 10)] : []),
-          child: Icon(isExpanded ? Icons.close : Icons.menu, color: Colors.white, size: 22),
-        ),
-      ),
-    );
-  }
-}
-
-class _GlowingMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final bool isExpanded;
-  final VoidCallback onTap;
-  const _GlowingMenuItem({required this.icon, required this.label, required this.isSelected, required this.isExpanded, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: isExpanded ? 12 : 0), 
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: isSelected ? CinematicColors.accent.withOpacity(0.15) : Colors.transparent, border: isSelected ? Border.all(color: CinematicColors.accent.withOpacity(0.5), width: 1) : null),
-          child: Row(
-            mainAxisAlignment: isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: isSelected ? Colors.white : Colors.white54, size: 24),
-              if (isExpanded) ...[
-                const SizedBox(width: 14),
-                Expanded(child: Text(label, style: GoogleFonts.montserrat(color: isSelected ? Colors.white : Colors.white70, fontSize: 14, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal), maxLines: 1, overflow: TextOverflow.ellipsis)),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _UserFooter extends StatelessWidget {
-  final bool isExpanded;
-  final VoidCallback onTap;
-  const _UserFooter({required this.isExpanded, required this.onTap});
-  
-  @override
-  Widget build(BuildContext context) {
-    if (!isExpanded) {
-      return Center(
-        child: Container(
-          width: 40, height: 40,
-          padding: const EdgeInsets.all(2),
-          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white24),
-          child: const CircleAvatar(radius: 18, backgroundColor: Color(0xFF333333), child: Icon(Icons.person, size: 20, color: Colors.white)),
-        ),
-      );
-    }
-
     return Container(
-      padding: const EdgeInsets.all(8),
+      width: 260,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF0F0F0F).withOpacity(0.85),
+        border: Border(right: BorderSide(color: Colors.white.withOpacity(0.06))),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white24),
-            child: const CircleAvatar(radius: 14, backgroundColor: Color(0xFF333333), child: Icon(Icons.person, size: 16, color: Colors.white)),
-          ),
-          const SizedBox(width: 10),
-          // --- CORRECCIÓN FINAL DE OVERFLOW ---
-          // Usamos Expanded para que la columna ocupe el resto del ancho y nada más.
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, 
+          const SizedBox(height: 18),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            child: Row(
               children: [
-                Flexible( 
-                  child: Text(
-                    "Mi Usuario", 
-                    style: GoogleFonts.roboto(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13), 
-                    overflow: TextOverflow.ellipsis, // Si no cabe, puntos suspensivos...
-                    maxLines: 1,
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: CinematicColors.accent.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: CinematicColors.accent.withOpacity(0.25)),
+                  ),
+                  child: const Icon(Icons.tv_rounded, color: CinematicColors.accent),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('OMNISTREAM', style: GoogleFonts.audiowide(color: Colors.white, fontSize: 14)),
+                      const SizedBox(height: 2),
+                      Text('IPTV', style: GoogleFonts.montserrat(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w600)),
+                    ],
                   ),
                 ),
-                const Text("Gratis", style: TextStyle(color: Colors.white54, fontSize: 10)),
               ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                child: NavigationRail(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onSelect,
+              backgroundColor: Colors.transparent,
+              useIndicator: true,
+              indicatorColor: CinematicColors.accent.withOpacity(0.16),
+              selectedIconTheme: const IconThemeData(color: CinematicColors.accent),
+              unselectedIconTheme: const IconThemeData(color: Colors.white54),
+              selectedLabelTextStyle: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w800),
+              unselectedLabelTextStyle: GoogleFonts.montserrat(color: Colors.white54, fontWeight: FontWeight.w700),
+              labelType: NavigationRailLabelType.all,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard_rounded),
+                  label: Text('Listas'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.live_tv_outlined),
+                  selectedIcon: Icon(Icons.live_tv_rounded),
+                  label: Text('En vivo'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.movie_outlined),
+                  selectedIcon: Icon(Icons.movie_rounded),
+                  label: Text('VOD'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings_rounded),
+                  label: Text('Ajustes'),
+                ),
+              ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.06)),
+              ),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Color(0xFF2A2A2A),
+                    child: Icon(Icons.person, color: Colors.white70, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Mi usuario', style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12), overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 2),
+                        Text('Gratis', style: GoogleFonts.montserrat(color: Colors.white38, fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
