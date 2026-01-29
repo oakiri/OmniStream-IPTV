@@ -1,4 +1,5 @@
 ﻿import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
@@ -25,6 +26,7 @@ import 'features/playlist/domain/repositories/playlist_profile_repository.dart';
 import 'features/playlist/domain/usecases/get_playlist.dart';
 import 'features/playlist/domain/usecases/get_playlist_profiles.dart';
 import 'features/playlist/domain/usecases/add_playlist_profile.dart';
+import 'features/playlist/domain/usecases/update_playlist_profile.dart';
 import 'features/playlist/domain/usecases/delete_playlist_profile.dart';
 import 'features/playlist/presentation/bloc/playlist_bloc.dart';
 import 'features/playlist/presentation/bloc/playlist_profile_bloc.dart';
@@ -47,6 +49,7 @@ import 'features/channels/presentation/bloc/channel_bloc.dart';
 
 // Core
 import 'core/utils/m3u_parser.dart';
+import 'core/storage/recent_playback_store.dart';
 
 final sl = GetIt.instance;
 
@@ -56,12 +59,14 @@ Future<void> init() async {
   sl.registerFactory(() => PlaylistProfileBloc(
     getPlaylistProfiles: sl(),
     addPlaylistProfile: sl(),
+    updatePlaylistProfile: sl(),
     deletePlaylistProfile: sl(),
   ));
 
   // Use cases
   sl.registerLazySingleton(() => GetPlaylistProfiles(sl()));
   sl.registerLazySingleton(() => AddPlaylistProfile(sl()));
+  sl.registerLazySingleton(() => UpdatePlaylistProfile(sl()));
   sl.registerLazySingleton(() => DeletePlaylistProfile(sl()));
 
   // Repository
@@ -155,6 +160,9 @@ Future<void> init() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
 
+  // Persistencia UX premium: último canal visto (Continuar viendo)
+  sl.registerLazySingleton<RecentPlaybackStore>(() => RecentPlaybackStore(prefs: sl()));
+
   // Hive Boxes
   final profileBox = await Hive.openBox<PlaylistProfileModel>('playlist_profiles');
   sl.registerLazySingleton<Box<PlaylistProfileModel>>(() => profileBox);
@@ -165,7 +173,8 @@ Future<void> init() async {
   // Cliente HTTP (Soporte SSL inseguro)
   sl.registerLazySingleton<http.Client>(() {
     final ioClient = HttpClient();
-    ioClient.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    // Seguridad: permitir certificados inválidos SOLO en debug.
+    ioClient.badCertificateCallback = (X509Certificate cert, String host, int port) => kDebugMode;
     return IOClient(ioClient);
   });
 

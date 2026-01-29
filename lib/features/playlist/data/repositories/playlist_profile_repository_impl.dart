@@ -32,11 +32,8 @@ class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
   Future<Either<Failure, void>> addPlaylistProfile(PlaylistProfile profile) async {
     try {
       final user = firebaseAuth?.currentUser;
-      final model = PlaylistProfileModel(
-        id: profile.id,
-        name: profile.name,
-        url: profile.url,
-        userId: user?.uid ?? 'local',
+      final model = PlaylistProfileModel.fromEntity(
+        profile.copyWith(userId: user?.uid ?? profile.userId ?? 'local'),
       );
       
       await localDataSource.savePlaylistProfile(model);
@@ -47,7 +44,32 @@ class PlaylistProfileRepositoryImpl implements PlaylistProfileRepository {
             .doc(user.uid)
             .collection('playlists')
             .doc(model.id)
-            .set(model.toJson());
+            .set(model.toJson(), SetOptions(merge: true));
+      }
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updatePlaylistProfile(PlaylistProfile profile) async {
+    try {
+      final user = firebaseAuth?.currentUser;
+      final model = PlaylistProfileModel.fromEntity(
+        profile.copyWith(userId: user?.uid ?? profile.userId ?? 'local'),
+      );
+
+      // Hive: mismo id -> se actualiza.
+      await localDataSource.savePlaylistProfile(model);
+
+      if (user != null && firestore != null) {
+        await firestore!
+            .collection('users')
+            .doc(user.uid)
+            .collection('playlists')
+            .doc(model.id)
+            .set(model.toJson(), SetOptions(merge: true));
       }
       return const Right(null);
     } catch (e) {

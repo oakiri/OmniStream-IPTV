@@ -20,6 +20,26 @@ class PlaylistProfile extends Equatable {
     this.expirationDate, // Añadido al constructor
   });
 
+  PlaylistProfile copyWith({
+    String? id,
+    String? name,
+    String? url,
+    String? userId,
+    String? type,
+    DateTime? lastUsed,
+    DateTime? expirationDate,
+  }) {
+    return PlaylistProfile(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      url: url ?? this.url,
+      userId: userId ?? this.userId,
+      type: type ?? this.type,
+      lastUsed: lastUsed ?? this.lastUsed,
+      expirationDate: expirationDate ?? this.expirationDate,
+    );
+  }
+
   @override
   List<Object?> get props => [id, name, url, userId, type, lastUsed, expirationDate];
 }

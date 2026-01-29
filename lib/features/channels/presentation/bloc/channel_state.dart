@@ -18,13 +18,18 @@ class ChannelLoaded extends ChannelState {
   
   // NUEVAS VARIABLES PARA CATEGORÍAS
   final List<String> categories;        // Lista de grupos: ["All", "Deportes", ...]
-  final String selectedCategory;        // Grupo activo: "Deportes"
+  /// Categorías seleccionadas (multi-select). Vacío == "All".
+  final Set<String> selectedCategories;
+
+  /// Búsqueda activa.
+  final String searchQuery;
 
   const ChannelLoaded({
     required this.allChannels,
     required this.displayChannels,
     required this.categories,
-    required this.selectedCategory,
+    required this.selectedCategories,
+    required this.searchQuery,
   });
 
   List<Channel> get channels => displayChannels;
@@ -33,18 +38,20 @@ class ChannelLoaded extends ChannelState {
     List<Channel>? allChannels,
     List<Channel>? displayChannels,
     List<String>? categories,
-    String? selectedCategory,
+    Set<String>? selectedCategories,
+    String? searchQuery,
   }) {
     return ChannelLoaded(
       allChannels: allChannels ?? this.allChannels,
       displayChannels: displayChannels ?? this.displayChannels,
       categories: categories ?? this.categories,
-      selectedCategory: selectedCategory ?? this.selectedCategory,
+      selectedCategories: selectedCategories ?? this.selectedCategories,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 
   @override
-  List<Object> get props => [allChannels, displayChannels, categories, selectedCategory];
+  List<Object> get props => [allChannels, displayChannels, categories, selectedCategories, searchQuery];
 }
 
 class ChannelError extends ChannelState {

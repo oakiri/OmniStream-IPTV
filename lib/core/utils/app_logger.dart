@@ -18,6 +18,8 @@ class AppLogger {
   void error(String message) => _out('ERROR', message);
 
   void _out(String tag, String message) {
+    // Solo en debug para no ensuciar logs de release.
+    if (!kDebugMode) return;
     debugPrint('[$tag][$scope] $message');
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:omnistream_iptv/features/playlist/domain/entities/channel.dart';
 
 class EpgGuideView extends StatefulWidget {
@@ -99,7 +99,7 @@ class _EpgGuideViewState extends State<EpgGuideView> {
 
   Widget _buildHeader() {
     final now = DateTime.now();
-    final timeFormat = DateFormat('HH:mm');
+    final timeFormat = intl.DateFormat('HH:mm');
     
     return Container(
       height: 60,
@@ -119,7 +119,7 @@ class _EpgGuideViewState extends State<EpgGuideView> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)),
-                child: Text(DateFormat('EEE, d MMM').format(now), style: const TextStyle(color: Colors.white70)),
+                child: Text(intl.DateFormat('EEE, d MMM').format(now), style: const TextStyle(color: Colors.white70)),
               )
             ],
           ),

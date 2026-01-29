@@ -15,8 +15,10 @@ class AppTheme {
     primaryColor: primaryColor,
     scaffoldBackgroundColor: backgroundColor,
     
-    // Configuración de Textos (Todo blanco por defecto)
-    textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme).apply(
+    // Configuración de Textos
+    // Objetivo: uniformidad "premium" (móvil + TV) evitando mezcla de tipografías.
+    // Usamos Montserrat como tipografía base del producto.
+    textTheme: GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme).apply(
       bodyColor: Colors.white,
       displayColor: Colors.white,
     ),
@@ -50,15 +52,16 @@ class AppTheme {
     ),
 
     // Configuración de la AppBar
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: backgroundColor,
       elevation: 0,
       centerTitle: true,
       iconTheme: IconThemeData(color: Colors.white),
-      titleTextStyle: TextStyle(
+      titleTextStyle: GoogleFonts.montserrat(
         color: Colors.white,
         fontSize: 20,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.2,
       ),
     ),
     
