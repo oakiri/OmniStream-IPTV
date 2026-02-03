@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ splash screen (Jetpack SplashScreen). -->
+    <style name="LaunchTheme" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/vivid_splash_bg</item>
+        <!-- Use the VIVID lockup for maximum brand clarity -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/vivid_splash_logo</item>
+        <item name="windowSplashScreenAnimationDuration">220</item>
+        <!-- Keep the icon background aligned with the app background -->
+        <item name="windowSplashScreenIconBackgroundColor">@color/vivid_splash_bg</item>
+        <item name="postSplashScreenTheme">@style/NormalTheme</item>
+    </style>
+
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/vivid_splash_bg</item>
+    </style>
+</resources>

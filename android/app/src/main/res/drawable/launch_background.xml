@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Native launch screen shown before Flutter draws its first frame (pre-Android 12). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/vivid_splash_bg" />
+
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/vivid_splash_logo" />
+    </item>
+</layer-list>
