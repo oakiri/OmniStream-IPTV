@@ -16,6 +16,11 @@ class EpgProgram extends Equatable {
 
   Duration get duration => stop.difference(start);
 
+  /// Convenience alias used by some UI layers.
+  /// Stored times are treated as UTC; convert for display with `.toLocal()`.
+  DateTime get startUtc => start.toUtc();
+  DateTime get stopUtc => stop.toUtc();
+
   @override
   List<Object?> get props => [title, start, stop, description];
 

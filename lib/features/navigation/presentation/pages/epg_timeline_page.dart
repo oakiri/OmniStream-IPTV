@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:omnistream_iptv/core/epg/epg_models.dart';
 import 'package:omnistream_iptv/core/epg/epg_service.dart';
@@ -64,9 +65,15 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
 
   (DateTime, DateTime)? _rangeUtc;
 
+  // Blindaje: en algunos entornos DateFormat puede lanzar LocaleDataException si no se inicializa
+  // el símbolo de fechas del locale. Nos auto-curamos aquí para que el Módulo 3 nunca reviente.
+  late final Future<void> _intlReady;
+
   @override
   void initState() {
     super.initState();
+
+    _intlReady = _ensureIntlReady();
 
     _vLeft.addListener(() => _syncVertical(from: _vLeft, to: _vRight));
     _vRight.addListener(() => _syncVertical(from: _vRight, to: _vLeft));
@@ -74,6 +81,33 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
     _rebuildCategories();
     _applyFilters();
     _bootstrap();
+  }
+
+  Future<void> _ensureIntlReady() async {
+    final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+    final localeName = deviceLocale.toString(); // ej: es_ES
+    final languageCode = deviceLocale.languageCode;
+
+    // Alinea el default locale con el del dispositivo.
+    intl.Intl.defaultLocale = localeName;
+
+    // Inicialización best-effort: probamos locales habituales (incluyendo 'es' porque en la UI se usa explícito).
+    for (final l in <String>[localeName, languageCode, 'es_ES', 'es', 'en_US']) {
+      try {
+        await initializeDateFormatting(l);
+      } catch (_) {
+        // ignore
+      }
+    }
+
+    // Sanity: si aun así falla el formateo en el locale actual, caemos a en_US (no debe crashear).
+    try {
+      intl.DateFormat('EEE dd/MM', intl.Intl.getCurrentLocale()).format(DateTime.now());
+    } catch (_) {
+      intl.Intl.defaultLocale = 'en_US';
+    }
+
+    debugPrint('[VIVID][EPG] intl ready: ${intl.Intl.getCurrentLocale()}');
   }
 
   @override
@@ -136,6 +170,9 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
     });
 
     try {
+      // Asegura que intl está listo antes de que la UI empiece a formatear horas/fechas.
+      await _intlReady;
+
       final epg = sl<EpgService>();
       await epg.ensureFresh(playlistUrl: widget.playlistUrl, force: force);
       final range = await epg.windowRangeUtc();
@@ -471,7 +508,7 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
             ),
             child: Row(
               children: [
-                ChannelLogo(url: ch.logoUrl, size: 34),
+                ChannelLogo(url: ch.logoUrl, width: 34, height: 34),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -533,7 +570,7 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
             right: 12,
             top: 10,
             child: Text(
-              '${intl.DateFormat('EEE dd/MM', 'es').format(start)}',
+              '${intl.DateFormat('EEE dd/MM', intl.Intl.getCurrentLocale()).format(start)}',
               style: GoogleFonts.montserrat(color: Colors.white38, fontWeight: FontWeight.w700, fontSize: 11),
             ),
           ),

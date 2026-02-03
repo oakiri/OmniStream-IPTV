@@ -9,7 +9,7 @@ android {
     namespace = "com.omnistream.omnistream_iptv"
     // Use a stable SDK level that exists on most dev machines.
     // Android 12+ splash screen support is provided via androidx.core:core-splashscreen.
-    compileSdk = 34
+    compileSdk = 36
     ndkVersion = "28.2.13676358" // O la versión que tengas instalada
 
     compileOptions {
@@ -24,7 +24,7 @@ android {
     defaultConfig {
         applicationId = "com.omnistream.omnistream_iptv"
         minSdk = flutter.minSdkVersion
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
         

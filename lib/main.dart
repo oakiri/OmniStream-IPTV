@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'firebase_options.dart';
 
@@ -31,6 +33,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+
+  // Intl: evita crashes (LocaleDataException) al formatear fechas/horas con locale explícito (p.ej. 'es').
+  final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+  final localeName = deviceLocale.toString(); // ej: es_ES
+  Intl.defaultLocale = localeName;
+  try {
+    await initializeDateFormatting(localeName);
+  } catch (_) {
+    // Fallback: languageCode (ej: 'es')
+    try {
+      await initializeDateFormatting(deviceLocale.languageCode);
+    } catch (_) {}
+  }
+  // Asegura símbolos en español cuando alguna pantalla fuerza 'es'.
+  try {
+    await initializeDateFormatting('es');
+  } catch (_) {}
 
   // Soporte híbrido: móvil (portrait/landscape) + TV (landscape)
   await SystemChrome.setPreferredOrientations([

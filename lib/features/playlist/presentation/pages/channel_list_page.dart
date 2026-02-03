@@ -207,7 +207,7 @@ class _ChannelListPageState extends State<ChannelListPage> with TickerProviderSt
   Widget _buildChannelTile(BuildContext context, Channel channel, bool isFocused) {
     return GestureDetector(
       onTap: () {
-        context.push('/player', extra: channel);
+        context.push('/player', extra: {'channel': channel});
       },
       child: Card(
         elevation: isFocused ? 8 : 4,

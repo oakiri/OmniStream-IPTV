@@ -175,6 +175,26 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     }
   }
 
+  void _exitPlayer() {
+    // Restaurar UI/rotación antes de salir (Android gestual/TV).
+    SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+
+    if (!mounted) return;
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      router.pop();
+    } else {
+      // Fallback sólido: volver al dashboard si el player se abrió como ruta inicial.
+      router.go('/playlist');
+    }
+  }
+
   void _onVerticalDragUpdate(DragUpdateDetails details, bool isRightSide) async {
     final double delta = details.primaryDelta! / -250; 
 
@@ -391,7 +411,13 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        _exitPlayer();
+      },
+      child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
@@ -431,7 +457,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               child: CinematicTopBar(
                 currentTime: _currentTime,
                 aspectRatioText: _aspectRatioText, 
-                onBack: () => context.pop(),
+                onBack: _exitPlayer,
               )
             ),
             
@@ -476,6 +502,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               ),
             ),
         ],
+      ),
       ),
     );
   }
