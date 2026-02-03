@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'package:omnistream_iptv/core/epg/epg_models.dart';
 import 'package:omnistream_iptv/core/epg/epg_service.dart';
@@ -57,6 +58,8 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
   bool _syncing = false;
   bool _loading = true;
   String? _error;
+  bool _showGoNow = false;
+  bool _didInitialScroll = false;
 
   List<String> _categories = const <String>['All'];
   String _selectedCategory = 'All';
@@ -77,6 +80,7 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
 
     _vLeft.addListener(() => _syncVertical(from: _vLeft, to: _vRight));
     _vRight.addListener(() => _syncVertical(from: _vRight, to: _vLeft));
+    _h.addListener(_handleGoNowVisibility);
 
     _rebuildCategories();
     _applyFilters();
@@ -117,6 +121,56 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
     _vRight.dispose();
     _h.dispose();
     super.dispose();
+  }
+
+  (DateTime, DateTime) _resolveWindow(DateTime nowUtc) {
+    final fallbackStart = nowUtc.subtract(_windowPast);
+    final fallbackEnd = nowUtc.add(_windowFuture);
+    final rangeUtc = _rangeUtc;
+
+    if (rangeUtc == null) return (fallbackStart, fallbackEnd);
+
+    final start = rangeUtc.$1;
+    final end = rangeUtc.$2;
+
+    if (nowUtc.isBefore(start) || nowUtc.isAfter(end)) {
+      return (fallbackStart, fallbackEnd);
+    }
+
+    return (start, end);
+  }
+
+  double _resolveNowX(DateTime nowUtc) {
+    final (startUtc, endUtc) = _resolveWindow(nowUtc);
+    final totalMinutes = endUtc.difference(startUtc).inMinutes.clamp(1, 24 * 60);
+    final timelineW = totalMinutes * _minuteW;
+    return (nowUtc.difference(startUtc).inMinutes * _minuteW).clamp(0.0, timelineW);
+  }
+
+  void _handleGoNowVisibility() {
+    if (!_h.hasClients) return;
+    final nowUtc = DateTime.now().toUtc();
+    final nowX = _resolveNowX(nowUtc);
+    final viewport = _h.position.viewportDimension;
+    final center = _h.offset + (viewport / 2);
+    final shouldShow = (center - nowX).abs() > 240;
+    if (shouldShow != _showGoNow && mounted) {
+      setState(() => _showGoNow = shouldShow);
+    }
+  }
+
+  void _scrollToNow() {
+    if (!_h.hasClients) return;
+    final nowUtc = DateTime.now().toUtc();
+    final nowX = _resolveNowX(nowUtc);
+    final viewport = _h.position.viewportDimension;
+    final target = (nowX - viewport / 2).clamp(_h.position.minScrollExtent, _h.position.maxScrollExtent);
+    _h.animateTo(target, duration: const Duration(milliseconds: 420), curve: Curves.easeOutCubic);
+  }
+
+  void _scrollToWindowStart() {
+    if (!_h.hasClients) return;
+    _h.jumpTo(_h.position.minScrollExtent);
   }
 
   void _syncVertical({required ScrollController from, required ScrollController to}) {
@@ -170,6 +224,10 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
     });
 
     try {
+      if (force) {
+        _winFutures.clear();
+      }
+
       // Asegura que intl está listo antes de que la UI empiece a formatear horas/fechas.
       await _intlReady;
 
@@ -195,6 +253,14 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
       }
 
       setState(() => _loading = false);
+
+      if (!_didInitialScroll) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _scrollToWindowStart();
+          _didInitialScroll = true;
+        });
+      }
     } catch (e) {
       setState(() {
         _loading = false;
@@ -225,14 +291,9 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
 
   @override
   Widget build(BuildContext context) {
-    final rangeUtc = _rangeUtc;
     final nowUtc = DateTime.now().toUtc();
 
-    // Fallback si no tenemos meta aún.
-    final fallbackStart = nowUtc.subtract(_windowPast);
-    final fallbackEnd = nowUtc.add(_windowFuture);
-    final startUtc = (rangeUtc?.$1) ?? fallbackStart;
-    final endUtc = (rangeUtc?.$2) ?? fallbackEnd;
+    final (startUtc, endUtc) = _resolveWindow(nowUtc);
     final totalMinutes = endUtc.difference(startUtc).inMinutes.clamp(1, 24 * 60);
     final timelineW = totalMinutes * _minuteW;
     final nowX = (nowUtc.difference(startUtc).inMinutes * _minuteW).clamp(0.0, timelineW);
@@ -258,60 +319,86 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
                 _buildTopBar(context, startUtc, endUtc),
                 _buildFilters(),
                 Expanded(
-                  child: _loading
-                      ? const Center(child: CircularProgressIndicator(color: CinematicColors.accent))
-                      : (_error != null)
-                          ? _buildError()
-                          : LayoutBuilder(
-                              builder: (ctx, c) {
-                                final contentH = c.maxHeight;
-                                return Row(
-                                  children: [
-                                    SizedBox(
-                                      width: _leftColWidth,
-                                      height: contentH,
-                                      child: Column(
-                                        children: [
-                                          SizedBox(height: 44, child: _leftHeader()),
-                                          Expanded(child: _buildChannelColumn()),
-                                        ],
+                  child: RefreshIndicator(
+                    color: CinematicColors.accent,
+                    onRefresh: () => _bootstrap(force: true),
+                    child: _loading
+                        ? const _EpgTimelineLoadingSkeleton()
+                        : (_error != null)
+                            ? _buildError()
+                            : LayoutBuilder(
+                                builder: (ctx, c) {
+                                  final contentH = c.maxHeight;
+                                  return Row(
+                                    children: [
+                                      SizedBox(
+                                        width: _leftColWidth,
+                                        height: contentH,
+                                        child: Column(
+                                          children: [
+                                            SizedBox(height: 44, child: _leftHeader()),
+                                            Expanded(child: _buildChannelColumn()),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      child: SingleChildScrollView(
-                                        controller: _h,
-                                        scrollDirection: Axis.horizontal,
-                                        child: SizedBox(
-                                          width: timelineW,
-                                          height: contentH,
-                                          child: Stack(
-                                            children: [
-                                              Column(
-                                                children: [
-                                                  SizedBox(height: 44, child: _buildTimelineHeader(startUtc, endUtc, timelineW)),
-                                                  Expanded(child: _buildTimelineList(startUtc, endUtc)),
-                                                ],
-                                              ),
-                                              Positioned(
-                                                left: nowX,
-                                                top: 0,
-                                                bottom: 0,
-                                                child: Container(
-                                                  width: 2,
-                                                  color: CinematicColors.accent.withOpacity(0.85),
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          controller: _h,
+                                          scrollDirection: Axis.horizontal,
+                                          child: SizedBox(
+                                            width: timelineW,
+                                            height: contentH,
+                                            child: Stack(
+                                              children: [
+                                                Column(
+                                                  children: [
+                                                    SizedBox(height: 44, child: _buildTimelineHeader(startUtc, endUtc, timelineW)),
+                                                    Expanded(child: _buildTimelineList(startUtc, endUtc)),
+                                                  ],
                                                 ),
-                                              ),
-                                            ],
+                                                Positioned(
+                                                  left: nowX,
+                                                  top: 0,
+                                                  bottom: 0,
+                                                  child: Container(
+                                                    width: 2,
+                                                    color: CinematicColors.accent.withOpacity(0.85),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                                    ],
+                                  );
+                                },
+                              ),
+                  ),
                 ),
               ],
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _showGoNow ? 1 : 0,
+              child: IgnorePointer(
+                ignoring: !_showGoNow,
+                child: ElevatedButton.icon(
+                  onPressed: _scrollToNow,
+                  icon: const Icon(Icons.my_location_rounded, size: 18),
+                  label: Text('Ir a ahora', style: GoogleFonts.montserrat(fontWeight: FontWeight.w900)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: CinematicColors.accent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -606,6 +693,72 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
           },
         );
       },
+    );
+  }
+}
+
+class _EpgTimelineLoadingSkeleton extends StatelessWidget {
+  const _EpgTimelineLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final leftWidth = constraints.maxWidth < 600 ? 200.0 : _EpgTimelinePageState._leftColWidth;
+        return Row(
+          children: [
+            SizedBox(
+              width: leftWidth,
+              child: Column(
+                children: List.generate(
+                  6,
+                  (index) => const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: _ShimmerBlock(height: 62),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                children: [
+                  const _ShimmerBlock(height: 42),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: 6,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (_, __) => const _ShimmerBlock(height: 62),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ShimmerBlock extends StatelessWidget {
+  final double height;
+
+  const _ShimmerBlock({required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.white.withOpacity(0.08),
+      highlightColor: Colors.white.withOpacity(0.18),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
     );
   }
 }
