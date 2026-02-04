@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- docs(setup): document env + build runner steps
+  - Summary: expand quick setup instructions to include .env creation and build_runner generation.
+  - Files: README.md
+- fix(build): ensure assets directories and env template
+  - Summary: add a tracked assets/images placeholder and replace the missing .env asset with .env.example for clean clones.
+  - Files: pubspec.yaml, assets/images/.gitkeep
+- fix(epg): guard async state + responsive header
+  - Summary: add mounted checks around async bootstrap, adapt header/column sizing to avoid overflow on small screens.
+  - Files: lib/features/navigation/presentation/pages/epg_timeline_page.dart
+- refactor(live): drive Live tab from playlist bloc
+  - Summary: replace the hub page with PlaylistBloc-driven timeline rendering and premium empty/error states.
+  - Files: lib/features/navigation/presentation/pages/live_page.dart, lib/features/navigation/presentation/pages/live_epg_hub_page.dart
 - feat(live): add EPG hub page
   - Summary: create the LiveEpgHubPage to load the last playlist, trigger EPG refresh, and render loading/empty/error states.
   - Files: lib/features/navigation/presentation/pages/live_epg_hub_page.dart

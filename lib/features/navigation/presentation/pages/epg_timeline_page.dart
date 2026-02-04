@@ -185,6 +185,12 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
     _syncing = false;
   }
 
+  double _resolveLeftColWidth(double maxWidth) {
+    if (maxWidth <= 0) return _leftColWidth;
+    final dynamicWidth = maxWidth * 0.38;
+    return dynamicWidth.clamp(180.0, _leftColWidth);
+  }
+
   void _rebuildCategories() {
     final set = <String>{};
     for (final c in widget.channels) {
@@ -230,10 +236,12 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
 
       // Asegura que intl está listo antes de que la UI empiece a formatear horas/fechas.
       await _intlReady;
+      if (!mounted) return;
 
       final epg = sl<EpgService>();
       await epg.ensureFresh(playlistUrl: widget.playlistUrl, force: force);
       final range = await epg.windowRangeUtc();
+      if (!mounted) return;
       setState(() {
         _rangeUtc = range;
       });
@@ -252,6 +260,7 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
         }
       }
 
+      if (!mounted) return;
       setState(() => _loading = false);
 
       if (!_didInitialScroll) {
@@ -262,6 +271,7 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = e.toString();
@@ -411,39 +421,83 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
     final left = fmt.format(startUtc.toLocal());
     final right = fmt.format(endUtc.toLocal());
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            splashRadius: 22,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            'Guía • 14h',
-            style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            '$left → $right',
-            style: GoogleFonts.montserrat(color: Colors.white54, fontWeight: FontWeight.w700, fontSize: 12),
-          ),
-          const Spacer(),
-          OutlinedButton.icon(
-            onPressed: _loading ? null : () => _bootstrap(force: true),
-            icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: Text('Actualizar', style: GoogleFonts.montserrat(fontWeight: FontWeight.w900)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: BorderSide(color: CinematicColors.accent.withOpacity(0.5)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-          ),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 520;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => context.pop(),
+                          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                          splashRadius: 22,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Guía • 14h',
+                            style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _loading ? null : () => _bootstrap(force: true),
+                          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                          splashRadius: 22,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$left → $right',
+                      style: GoogleFonts.montserrat(color: Colors.white54, fontWeight: FontWeight.w700, fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => context.pop(),
+                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                      splashRadius: 22,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Guía • 14h',
+                      style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '$left → $right',
+                        style: GoogleFonts.montserrat(color: Colors.white54, fontWeight: FontWeight.w700, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _loading ? null : () => _bootstrap(force: true),
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: Text('Actualizar', style: GoogleFonts.montserrat(fontWeight: FontWeight.w900)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: BorderSide(color: CinematicColors.accent.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                    ),
+                  ],
+                ),
+        );
+      },
     );
   }
 
