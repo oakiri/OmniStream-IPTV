@@ -51,7 +51,19 @@ Incluido en este ZIP (objetivo: PR-1 + PR-2 + PR-3 en una única entrega estable
 flutter pub get
 ```
 
-2) Ejecutar
+2) (Opcional) Crear archivo de entorno local
+
+```bash
+cp .env.example .env
+```
+
+3) Generar código (build_runner)
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+4) Ejecutar
 
 ```bash
 flutter run
@@ -89,4 +101,3 @@ El package real de instalación lo determina `applicationId`:
 - `ARQUITECTURA_ESTABILIZADA.md`
 - `INFRASTRUCTURE_SETUP.md`
 - `NATIVE_CONFIG.md`
-
