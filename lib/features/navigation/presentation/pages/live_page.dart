@@ -1,20 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import 'package:omnistream_iptv/core/storage/recent_playback_store.dart';
-import 'package:omnistream_iptv/core/widgets/cinematic_theme.dart';
-import 'package:omnistream_iptv/features/navigation/presentation/pages/epg_timeline_page.dart';
-import 'package:omnistream_iptv/features/playlist/domain/entities/playlist_profile.dart';
-import 'package:omnistream_iptv/features/playlist/domain/usecases/get_playlist_profiles.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_bloc.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_event.dart';
-import 'package:omnistream_iptv/features/playlist/presentation/bloc/playlist_state.dart';
-import 'package:omnistream_iptv/core/usecases/no_params.dart';
-import 'package:omnistream_iptv/injection_container.dart';
+import 'package:omnistream_iptv/features/navigation/presentation/pages/live_epg_hub_page.dart';
 
 class LivePage extends StatefulWidget {
   const LivePage({super.key});
@@ -319,5 +306,6 @@ class _LiveEmptyState extends StatelessWidget {
         ],
       ),
     );
+    return const LiveEpgHubPage();
   }
 }

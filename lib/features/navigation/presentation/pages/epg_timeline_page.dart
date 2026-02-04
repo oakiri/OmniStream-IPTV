@@ -339,11 +339,10 @@ class _EpgTimelinePageState extends State<EpgTimelinePage> {
                             : LayoutBuilder(
                                 builder: (ctx, c) {
                                   final contentH = c.maxHeight;
-                                  final leftWidth = _resolveLeftColWidth(c.maxWidth);
                                   return Row(
                                     children: [
                                       SizedBox(
-                                        width: leftWidth,
+                                        width: _leftColWidth,
                                         height: contentH,
                                         child: Column(
                                           children: [
@@ -759,7 +758,7 @@ class _EpgTimelineLoadingSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final leftWidth = (constraints.maxWidth * 0.38).clamp(180.0, _EpgTimelinePageState._leftColWidth);
+        final leftWidth = constraints.maxWidth < 600 ? 200.0 : _EpgTimelinePageState._leftColWidth;
         return Row(
           children: [
             SizedBox(
