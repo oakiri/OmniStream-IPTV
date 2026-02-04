@@ -85,6 +85,8 @@ local.properties
 
 # Generated files
 *.g.dart
+# Allow committed generated adapters/serializers for playlist models (required to build)
+!lib/features/playlist/data/models/*.g.dart
 *.freezed.dart
 *.config.dart
 
